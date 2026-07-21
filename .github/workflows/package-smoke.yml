@@ -1,0 +1,72 @@
+name: Package smoke test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - "hardening/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-install:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install editable development package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Verify editable package metadata
+        run: |
+          python - <<'PY'
+          from importlib.metadata import version
+          import model
+          from model import Kronos, KronosPredictor, KronosTokenizer
+
+          assert model.__version__ == "0.1.0.dev0"
+          assert version("kronos-timeseries") == model.__version__
+          assert Kronos is not None
+          assert KronosPredictor is not None
+          assert KronosTokenizer is not None
+          PY
+
+      - name: Build source and wheel distributions
+        run: python -m build
+
+      - name: Install built wheel without dependencies
+        run: |
+          python -m pip uninstall -y kronos-timeseries
+          python -m pip install --no-deps dist/*.whl
+
+      - name: Verify wheel import
+        run: |
+          python - <<'PY'
+          from importlib.metadata import version
+          import model
+
+          assert version("kronos-timeseries") == model.__version__
+          assert model.get_model_class("kronos") is model.Kronos
+          PY
