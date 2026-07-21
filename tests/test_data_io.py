@@ -182,7 +182,7 @@ def test_archive_size_limit_is_enforced(tmp_path):
 
 
 def test_invalid_mapping_values_are_rejected(tmp_path):
-    with pytest.raises(data_io.DataArchiveError, match="string keys"):
+    with pytest.raises(data_io.DataArchiveError, match="keys must be strings"):
         data_io.save_frame_mapping({1: pd.DataFrame()}, tmp_path / "bad.zip")
     with pytest.raises(data_io.DataArchiveError, match="not a pandas DataFrame"):
         data_io.save_frame_mapping({"bad": []}, tmp_path / "bad.zip")
