@@ -2,12 +2,25 @@
 
 __version__ = "0.1.0.dev0"
 
-from .kronos import Kronos, KronosPredictor, KronosTokenizer
+from . import kronos as _kronos
+from .sampling import sample_from_logits, top_k_top_p_filtering
+
+# Keep legacy ``model.kronos`` imports and the autoregressive generator's
+# runtime global lookups on the hardened implementation without changing the
+# released checkpoint module layout.
+_kronos.sample_from_logits = sample_from_logits
+_kronos.top_k_top_p_filtering = top_k_top_p_filtering
+
+Kronos = _kronos.Kronos
+KronosPredictor = _kronos.KronosPredictor
+KronosTokenizer = _kronos.KronosTokenizer
 
 __all__ = [
     "Kronos",
     "KronosPredictor",
     "KronosTokenizer",
+    "sample_from_logits",
+    "top_k_top_p_filtering",
     "__version__",
     "get_model_class",
 ]

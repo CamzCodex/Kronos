@@ -12,7 +12,7 @@ This fork treats the published model and released checkpoints as research assets
 
 ## Phase 1 — correctness and test foundations
 
-Tracked in draft PR #4.
+Merged in PR #4.
 
 - [x] Remove future-window leakage from custom CSV normalization.
 - [x] Apply top-k and top-p filtering together.
@@ -21,20 +21,30 @@ Tracked in draft PR #4.
 - [x] Correct attention causal-mask semantics covered by the imported module suite.
 - [x] Add fast offline unit tests on Python 3.10 and 3.12.
 - [x] Add a direct causal-normalization regression test.
-- [ ] Make sampling filtering non-mutating and remove its expected failure.
-- [ ] Run the checkpoint-backed regression suite before merging.
+- [x] Add and pass the released-checkpoint regression gate.
+- [x] Declare dependencies required by the fine-tuning configuration loader.
 
 ## Phase 2 — packaging and reproducible environments
 
-- [ ] Add a standards-compliant `pyproject.toml` using `setuptools.build_meta`.
-- [ ] Support `pip install -e .` without deleting script compatibility prematurely.
+Merged in PR #5.
+
+- [x] Add a standards-compliant `pyproject.toml` using `setuptools.build_meta`.
+- [x] Support editable and wheel installation without deleting script compatibility prematurely.
+- [x] Separate core, web UI, fine-tuning, test, and development dependency groups.
+- [x] Verify imports from an installed wheel outside the repository checkout.
+- [x] Define focused lint configuration without mixing mass formatting into logic PRs.
 - [ ] Replace working-directory-dependent imports with package-relative imports.
-- [ ] Separate core, web UI, fine-tuning, and development dependency groups.
 - [ ] Add a dependency lock strategy for CI and documented research runs.
-- [ ] Add linting and static checks without mixing mass formatting into logic PRs.
+- [ ] Run lint and static checks as required CI gates.
 
 ## Phase 3 — inference API and financial invariants
 
+Sampling hardening is tracked in PR #7.
+
+- [x] Make top-k/top-p filtering side-effect-free.
+- [x] Validate logits and generation controls before sampling.
+- [x] Preserve legacy `model.kronos` sampling imports and internal runtime behavior.
+- [x] Add focused compatibility and invalid-input regression tests.
 - [ ] Return individual sampled paths and calibrated quantiles, not only their mean.
 - [ ] Add deterministic generation controls and explicit random generators.
 - [ ] Validate timestamp lengths, monotonicity, and frequency consistency.
