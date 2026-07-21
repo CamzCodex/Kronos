@@ -61,12 +61,20 @@ jobs:
           python -m pip uninstall -y kronos-timeseries
           python -m pip install --no-deps dist/*.whl
 
-      - name: Verify wheel import
+      - name: Verify wheel import outside the source tree
         run: |
+          cd "${RUNNER_TEMP}"
           python - <<'PY'
+          import os
           from importlib.metadata import version
+          from pathlib import Path
+
           import model
 
+          workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
+          imported_from = Path(model.__file__).resolve()
+
+          assert not imported_from.is_relative_to(workspace)
           assert version("kronos-timeseries") == model.__version__
           assert model.get_model_class("kronos") is model.Kronos
           PY
