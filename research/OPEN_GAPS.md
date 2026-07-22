@@ -29,7 +29,7 @@ Status date: 2026-07-22
 - status: Partially resolved — requirements and candidate refusal are explicit; data acquisition remains a promotion blocker
 - required work: Supply an already licensed evidence package or separately authorize paid-source evaluation; then implement the source adapter, pass this gate, and write/register the first real manifest.
 - blocking decision: Any evidence-grade experiment
-- related PR: None
+- related PR: `#21`
 - related experiment: None
 
 ## GAP-003 — No leakage and causality auditor
@@ -74,7 +74,7 @@ Status date: 2026-07-22
 - status: Partially resolved — real execution remains a promotion blocker
 - required work: Source-specific forecast/baseline/scale/regime adapters, attested registry launcher capture, feature-matched comparators, factor exposure source, verified real fold audits, physical final-holdout enforcement, evaluation CI smoke
 - blocking decision: Model usefulness and fine-tuning gate
-- related PR: `#16`, `#17`, `#18`, and this phase's pull request
+- related PR: `#16`, `#17`, `#18`, `#19`, `#20`, and `#21`
 - related experiment: None
 
 ## GAP-006 — No zero-shot reference benchmark
@@ -149,5 +149,5 @@ Status date: 2026-07-22
 - status: Open — model-promotion blocker
 - required work: Capture Git/environment state in the executable launcher, bind passed audit/result artifacts automatically, resolve approval evidence to repository records, serialize concurrent writers, and define signed or repository-governed promotion authority before production use.
 - blocking decision: Model promotion and production-readiness classification
-- related PR: This phase's pull request
+- related PR: `#20`
 - related experiment: None

@@ -1,7 +1,7 @@
 # Kronos research status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `d47d0048ee0521b304d96102205dd0f9d2eaacde`
+Evidence baseline: `master` at `ea66c2ae6cb9231f539407bd0bbdfcd532fdb876`
 
 ## Decision
 
@@ -37,7 +37,7 @@ These are software and checkpoint-reproducibility results. They are not independ
 - common point, direction, ranking, probabilistic, regime, paper-cost, exposure, cost-sensitivity, paired bootstrap, and final-isolation calculations merged in PR #18. Only synthetic formula and failure-mode fixtures have been evaluated.
 - a complete-suite, passed-audit-only development runner with truth matching, test/final boundary refusal, optional downstream cost binding, and immutable JSON results merged in PR #19. Its tests use synthetic audits and forecasts only.
 - a content-addressed local experiment/model registry with exact-byte reconstruction, immutable records and alias history, and mechanically gated aliases merged in PR #20. Its tests use synthetic files and metadata only.
-- a fail-closed reference-source evidence gate on the active phase branch. Its tests validate refusal/identity mechanics only; no real source passes and no source artifact is invented.
+- a fail-closed reference-source evidence gate merged in PR #21. Its tests validate refusal/identity mechanics only; no real source passes and no source artifact is invented.
 
 Engineering completion must not be reported as financial validation.
 
