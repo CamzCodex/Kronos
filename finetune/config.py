@@ -1,5 +1,6 @@
 import os
 
+
 class Config:
     """
     Configuration class for the entire project.
@@ -37,8 +38,13 @@ class Config:
         self.test_time_range = ["2024-04-01", "2025-06-05"]
         self.backtest_time_range = ["2024-07-01", "2025-06-05"]
 
-        # TODO: Directory to save the processed, pickled datasets.
+        # TODO: Directory for prepared .kronos.zip datasets.
         self.dataset_path = "./data/processed_datasets"
+
+        # Legacy .pkl compatibility is disabled because pickle loading can execute
+        # arbitrary code. Enable this only for verified, trusted local files while
+        # migrating them with `python -m finetune.data_io ... --allow-unsafe-pickle`.
+        self.allow_unsafe_pickle = False
 
         # =================================================================
         # Training Hyperparameters

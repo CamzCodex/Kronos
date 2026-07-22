@@ -1,9 +1,15 @@
-import pickle
 import random
+
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from config import Config
+
+try:
+    from .archive_paths import load_named_frame_mapping, safe_archive_path
+    from .config import Config
+except ImportError:  # Script-style execution from the finetune directory.
+    from archive_paths import load_named_frame_mapping, safe_archive_path
+    from config import Config
 
 
 class QlibDataset(Dataset):
@@ -30,16 +36,20 @@ class QlibDataset(Dataset):
         # interfering with other random processes (e.g., in model initialization).
         self.py_rng = random.Random(self.config.seed)
 
-        # Set paths and number of samples based on the data type.
+        # Set the canonical archive name and number of samples based on data type.
         if data_type == 'train':
-            self.data_path = f"{self.config.dataset_path}/train_data.pkl"
+            self.data_name = "train_data"
             self.n_samples = self.config.n_train_iter
         else:
-            self.data_path = f"{self.config.dataset_path}/val_data.pkl"
+            self.data_name = "val_data"
             self.n_samples = self.config.n_val_iter
 
-        with open(self.data_path, 'rb') as f:
-            self.data = pickle.load(f)
+        self.data_path = safe_archive_path(self.config.dataset_path, self.data_name)
+        self.data = load_named_frame_mapping(
+            self.config.dataset_path,
+            self.data_name,
+            allow_unsafe_pickle=self.config.allow_unsafe_pickle,
+        )
 
         self.window = self.config.lookback_window + self.config.predict_window + 1
 
@@ -49,6 +59,7 @@ class QlibDataset(Dataset):
 
         # Pre-compute all possible (symbol, start_index) pairs.
         self.indices = []
+        print(f"[{data_type.upper()}] Loaded prepared data from {self.data_path}")
         print(f"[{data_type.upper()}] Pre-computing sample indices...")
         for symbol in self.symbols:
             df = self.data[symbol].reset_index()
@@ -90,7 +101,6 @@ class QlibDataset(Dataset):
         return self.n_samples
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        
         # Select a random sample from the entire pool of indices.
         random_idx = self.py_rng.randint(0, len(self.indices) - 1)
         symbol, start_idx = self.indices[random_idx]
@@ -110,9 +120,9 @@ class QlibDataset(Dataset):
         past_x = x[:past_len]
 
         x_mean = np.mean(past_x, axis=0)
-        x_std  = np.std(past_x, axis=0)
+        x_std = np.std(past_x, axis=0)
 
-        # Apply normalization and robust clipping to the entire sequence
+        # Apply normalization and robust clipping to the entire sequence.
         x = (x - x_mean) / (x_std + 1e-5)
         x = np.clip(x, -self.config.clip, self.config.clip)
 
@@ -129,7 +139,6 @@ if __name__ == '__main__':
     train_dataset = QlibDataset(data_type='train')
 
     print(f"Dataset length: {len(train_dataset)}")
-
     if len(train_dataset) > 0:
         try_x, try_x_stamp = train_dataset[100]  # Index 100 is ignored.
         print(f"Sample feature shape: {try_x.shape}")

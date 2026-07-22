@@ -1,5 +1,3 @@
-import os
-import pickle
 import numpy as np
 import pandas as pd
 import qlib
@@ -8,7 +6,12 @@ from qlib.data import D
 from qlib.data.dataset.loader import QlibDataLoader
 from tqdm import trange
 
-from config import Config
+try:
+    from .archive_paths import save_named_frame_mapping
+    from .config import Config
+except ImportError:  # Script-style execution from the finetune directory.
+    from archive_paths import save_named_frame_mapping
+    from config import Config
 
 
 class QlibDataPreprocessor:
@@ -40,17 +43,17 @@ class QlibDataPreprocessor:
         start_index = cal.searchsorted(pd.Timestamp(self.config.dataset_begin_time))
         end_index = cal.searchsorted(pd.Timestamp(self.config.dataset_end_time))
 
-        # Check if start_index lookbackw_window will cause negative index
+        # Check if start_index lookback_window will cause a negative index.
         adjusted_start_index = max(start_index - self.config.lookback_window, 0)
         real_start_time = cal[adjusted_start_index]
 
-        # Check if end_index exceeds the range of the array
+        # Check if end_index exceeds the range of the array.
         if end_index >= len(cal):
             end_index = len(cal) - 1
         elif cal[end_index] != pd.Timestamp(self.config.dataset_end_time):
             end_index -= 1
 
-        # Check if end_index+predictw_window will exceed the range of the array
+        # Check if end_index + predict_window will exceed the range of the array.
         adjusted_end_index = min(end_index + self.config.predict_window, len(cal) - 1)
         real_end_time = cal[adjusted_end_index]
 
@@ -84,7 +87,8 @@ class QlibDataPreprocessor:
 
     def prepare_dataset(self):
         """
-        Splits the loaded data into train, validation, and test sets and saves them to disk.
+        Splits the loaded data into train, validation, and test sets and saves
+        versioned, checksummed `.kronos.zip` archives to disk.
         """
         print("Splitting data into train, validation, and test sets...")
         train_data, val_data, test_data = {}, {}, {}
@@ -109,16 +113,21 @@ class QlibDataPreprocessor:
             val_data[symbol] = symbol_df[val_mask]
             test_data[symbol] = symbol_df[test_mask]
 
-        # Save the datasets using pickle.
-        os.makedirs(self.config.dataset_path, exist_ok=True)
-        with open(f"{self.config.dataset_path}/train_data.pkl", 'wb') as f:
-            pickle.dump(train_data, f)
-        with open(f"{self.config.dataset_path}/val_data.pkl", 'wb') as f:
-            pickle.dump(val_data, f)
-        with open(f"{self.config.dataset_path}/test_data.pkl", 'wb') as f:
-            pickle.dump(test_data, f)
+        archives = {
+            "train_data": save_named_frame_mapping(
+                train_data, self.config.dataset_path, "train_data"
+            ),
+            "val_data": save_named_frame_mapping(
+                val_data, self.config.dataset_path, "val_data"
+            ),
+            "test_data": save_named_frame_mapping(
+                test_data, self.config.dataset_path, "test_data"
+            ),
+        }
 
-        print("Datasets prepared and saved successfully.")
+        print("Datasets prepared and saved successfully:")
+        for name, path in archives.items():
+            print(f"  {name}: {path}")
 
 
 if __name__ == '__main__':
@@ -127,4 +136,3 @@ if __name__ == '__main__':
     preprocessor.initialize_qlib()
     preprocessor.load_qlib_data()
     preprocessor.prepare_dataset()
-
