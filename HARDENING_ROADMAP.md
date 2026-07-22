@@ -45,10 +45,10 @@ Sampling hardening merged in PR #7.
 - [x] Validate logits and generation controls before sampling.
 - [x] Preserve legacy `model.kronos` sampling imports and internal runtime behavior.
 - [x] Add focused compatibility and invalid-input regression tests.
-- [ ] Return individual sampled paths and calibrated quantiles, not only their mean.
-- [ ] Add deterministic generation controls and explicit random generators.
-- [ ] Validate timestamp lengths, monotonicity, and frequency consistency.
-- [ ] Enforce or explicitly report OHLC validity and non-negative volume/amount.
+- [x] Return individual sampled paths and configurable quantiles, not only their mean. Calibration remains an evaluation requirement.
+- [x] Add deterministic generation controls and explicit random generators.
+- [x] Validate timestamp lengths, monotonicity, timezone awareness, frequency consistency, and context limits.
+- [x] Preserve raw generated candles and explicitly report OHLC, volume, amount, and projection validity.
 - [ ] Add corporate-action guidance and adjusted-price handling.
 - [ ] Benchmark memory and throughput before introducing KV caching.
 

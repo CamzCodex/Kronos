@@ -56,13 +56,15 @@ jobs:
               save_named_frame_mapping,
               save_prediction_signals,
           )
-          from model import Kronos, KronosPredictor, KronosTokenizer
+          from model import ForecastRequest, ForecastResult, Kronos, KronosPredictor, KronosTokenizer
 
           assert model.__version__ == "0.1.0.dev0"
           assert version("kronos-timeseries") == model.__version__
           assert Kronos is not None
           assert KronosPredictor is not None
           assert KronosTokenizer is not None
+          assert ForecastRequest is not None
+          assert ForecastResult is not None
           assert finetune is not None
           assert kronos_data.FEATURE_SCHEMA_VERSION == "1.0.0"
           assert callable(kronos_data.validate_bars)
@@ -109,6 +111,8 @@ jobs:
           assert not data_imported_from.is_relative_to(workspace)
           assert version("kronos-timeseries") == model.__version__
           assert model.get_model_class("kronos") is model.Kronos
+          assert model.ForecastRequest is not None
+          assert model.ForecastResult is not None
           assert data_io.FORMAT_VERSION == 1
           assert callable(data_io.save_frame_mapping)
           assert data_io.save_frame_mapping is not archive_writer.save_frame_mapping

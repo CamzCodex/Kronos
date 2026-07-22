@@ -77,3 +77,16 @@
 - reversal trigger: None for error-severity causal failures; only correction and a new audit may reverse the result.
 - related commit: Introduced by `data/leakage-auditor`
 - related PR: This phase's pull request
+
+## DEC-007 — Raw forecast samples remain primary evidence
+
+- decision_id: `DEC-007`
+- date: 2026-07-22
+- decision: Preserve every requested decoded sample before validation; never overwrite raw output; make candle projection opt-in and cell-accounted; compute published path summaries only from explicitly identified valid raw or projected paths.
+- alternatives: Continue returning only the mean; silently repair all candles; discard invalid paths without reporting; treat token sample frequency as a calibrated probability.
+- evidence: `model/forecast.py`, forecast API regression tests, and the Phase 4 adversarial review.
+- reasoning: Calibration, dispersion, invalid-generation rate, and repair sensitivity cannot be audited after samples are averaged or overwritten.
+- risks: Conditioning summaries on valid paths can bias the distribution, while projection can mask model failure. Every evaluation must report raw/output validity, generated/summary counts, repair rate, and calibration.
+- reversal trigger: A versioned forecast-contract change supported by backward-compatibility tests and stronger evidence-preservation guarantees.
+- related commit: Introduced by `inference/probabilistic-forecast-api`
+- related PR: This phase's pull request

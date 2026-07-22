@@ -231,6 +231,20 @@ class TestSampleFromLogits:
         with pytest.raises(TypeError, match="sample_logits"):
             sample_from_logits(torch.randn(1, 4), sample_logits=1)
 
+    def test_explicit_generator_is_reproducible(self):
+        logits = torch.tensor([[0.1, 0.2, 0.3, 0.4]])
+        first = torch.Generator().manual_seed(123)
+        second = torch.Generator().manual_seed(123)
+
+        first_sample = sample_from_logits(logits, generator=first)
+        second_sample = sample_from_logits(logits, generator=second)
+
+        torch.testing.assert_close(first_sample, second_sample)
+
+    def test_invalid_generator_type_is_rejected(self):
+        with pytest.raises(TypeError, match="generator"):
+            sample_from_logits(torch.randn(1, 4), generator=123)
+
     def test_filter_validation_is_applied_during_sampling(self):
         with pytest.raises(ValueError, match="top_k"):
             sample_from_logits(torch.randn(1, 4), top_k=-1)

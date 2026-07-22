@@ -3,6 +3,15 @@
 __version__ = "0.1.0.dev0"
 
 from . import kronos as _kronos
+from .forecast import (
+    CandleIssue,
+    CandleRepair,
+    ForecastRequest,
+    ForecastRequestError,
+    ForecastResult,
+    ForecastValidityReport,
+    SamplePathValidity,
+)
 from .sampling import sample_from_logits, top_k_top_p_filtering
 
 # Keep legacy ``model.kronos`` imports and the autoregressive generator's
@@ -19,6 +28,13 @@ __all__ = [
     "Kronos",
     "KronosPredictor",
     "KronosTokenizer",
+    "CandleIssue",
+    "CandleRepair",
+    "ForecastRequest",
+    "ForecastRequestError",
+    "ForecastResult",
+    "ForecastValidityReport",
+    "SamplePathValidity",
     "sample_from_logits",
     "top_k_top_p_filtering",
     "__version__",
