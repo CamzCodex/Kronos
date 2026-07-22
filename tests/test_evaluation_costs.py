@@ -27,6 +27,7 @@ def _decisions():
                 {
                     "decision_timestamp": decision,
                     "realization_timestamp": realization,
+                    "dollar_volume_as_of_timestamp": decision,
                     "instrument_id": instrument,
                     "target_weight": weights[instrument_number],
                     "realized_return": outcomes[instrument_number],
@@ -209,8 +210,20 @@ def test_cost_timestamps_must_be_aware_and_periods_non_overlapping():
     overlapping.loc[third_period, "decision_timestamp"] = pd.Timestamp(
         "2024-01-03 12:00", tz="UTC"
     )
+    overlapping.loc[third_period, "dollar_volume_as_of_timestamp"] = pd.Timestamp(
+        "2024-01-03 12:00", tz="UTC"
+    )
     with pytest.raises(CostModelError, match="must not overlap"):
         evaluate_paper_returns(_request(decisions=overlapping))
+
+
+def test_liquidity_estimate_cannot_be_timestamped_after_decision():
+    decisions = _decisions()
+    decisions.loc[0, "dollar_volume_as_of_timestamp"] = (
+        decisions.loc[0, "decision_timestamp"] + pd.Timedelta(seconds=1)
+    )
+    with pytest.raises(CostModelError, match="cannot be later"):
+        evaluate_paper_returns(_request(decisions=decisions))
 
 
 def test_complete_universe_and_unique_rows_are_required():

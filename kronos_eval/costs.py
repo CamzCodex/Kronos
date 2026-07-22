@@ -18,6 +18,7 @@ COST_MODEL_VERSION = "1.0.0"
 REQUIRED_PAPER_RETURN_COLUMNS = (
     "decision_timestamp",
     "realization_timestamp",
+    "dollar_volume_as_of_timestamp",
     "instrument_id",
     "target_weight",
     "realized_return",
@@ -174,6 +175,7 @@ def evaluate_paper_returns(request: CostEvaluationRequest) -> CostEvaluationResu
                 {
                     "decision_timestamp": decision_timestamp,
                     "realization_timestamp": realization_timestamp,
+                    "dollar_volume_as_of_timestamp": row.dollar_volume_as_of_timestamp,
                     "instrument_id": row.instrument_id,
                     "previous_weight": prior_weight,
                     "target_weight": float(row.target_weight),
@@ -312,11 +314,19 @@ def _validated_decisions(request: CostEvaluationRequest) -> pd.DataFrame:
     frame = request.decisions.loc[:, columns].copy(deep=True)
     if frame.empty:
         raise CostModelError("decisions must not be empty")
-    for column in ("decision_timestamp", "realization_timestamp"):
+    for column in (
+        "decision_timestamp",
+        "realization_timestamp",
+        "dollar_volume_as_of_timestamp",
+    ):
         frame[column] = _aware_utc_index(frame[column], column)
     if (frame["realization_timestamp"] <= frame["decision_timestamp"]).any():
         raise CostModelError(
             "every realization_timestamp must be later than its decision_timestamp"
+        )
+    if (frame["dollar_volume_as_of_timestamp"] > frame["decision_timestamp"]).any():
+        raise CostModelError(
+            "dollar_volume_as_of_timestamp cannot be later than decision_timestamp"
         )
     frame["instrument_id"] = frame["instrument_id"].astype("string")
     if frame["instrument_id"].isna().any() or (
@@ -419,6 +429,7 @@ def _economic_metrics(
         "paper-return cost accounting is a deterministic simulation, not evidence of fills",
         "Sharpe-like statistic is unadjusted for autocorrelation, non-normality, risk-free rate, and multiple testing",
         "fixed spread/slippage plus square-root participation impact are assumptions requiring sensitivity analysis",
+        "dollar_volume must be a causally available capacity estimate as of its declared timestamp",
         "target weights are externally supplied; this module creates no order and applies no risk approval",
     )
     return metrics, warnings

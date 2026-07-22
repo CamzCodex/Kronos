@@ -39,9 +39,10 @@ The one-way paper cost is:
 `abs(delta_weight) * (commission + half spread + slippage + impact) / 10,000`
 
 where impact in basis points is the declared coefficient multiplied by participation
-raised to the declared exponent. Participation is trade notional divided by dollar
-volume. A trade above the declared participation ceiling invalidates the evaluation;
-it is not silently filled or clipped.
+raised to the declared exponent. Participation is trade notional divided by a
+causally available dollar-volume capacity estimate whose as-of timestamp cannot be
+later than the decision. A trade above the declared participation ceiling invalidates
+the evaluation; it is not silently filled or clipped.
 
 Outputs include trade and period ledgers, gross/net compounded returns, turnover,
 cost components, drawdown, annualized volatility, a cautiously labelled Sharpe-like

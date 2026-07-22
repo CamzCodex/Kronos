@@ -88,6 +88,10 @@ class ForecastMetricRequest:
                 raise ForecastMetricError("quantile probabilities must be between 0 and 1")
             if not column:
                 raise ForecastMetricError("quantile column names must be non-empty")
+            if column in REQUIRED_EVALUATION_COLUMNS:
+                raise ForecastMetricError(
+                    "quantile column names cannot replace required observation columns"
+                )
         object.__setattr__(self, "quantile_columns", normalized)
 
 
@@ -309,7 +313,10 @@ def _validated_request(
 
     samples = None
     if request.sample_forecasts is not None:
-        samples = np.asarray(request.sample_forecasts, dtype=float)
+        try:
+            samples = np.asarray(request.sample_forecasts, dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ForecastMetricError("sample_forecasts must be numeric") from exc
         if samples.ndim != 2 or samples.shape[0] != len(request.observations):
             raise ForecastMetricError(
                 "sample_forecasts must have shape (observation_count, sample_count)"

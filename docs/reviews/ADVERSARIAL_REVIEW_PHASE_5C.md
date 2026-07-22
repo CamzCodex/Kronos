@@ -62,8 +62,9 @@ Severity: critical. Fixed spreads, zero rejected orders, unlimited liquidity, or
 impact can turn turnover into fictitious profit.
 
 Control: commission, half spread, slippage, participation impact, notional, and a hard
-participation ceiling are identity-bound. The module refuses over-limit trades and
-supports unchanged-path scenario sensitivity. These are still assumptions, not fills.
+participation ceiling are identity-bound. Dollar-volume estimates carry an as-of time
+no later than the decision. The module refuses over-limit trades and supports
+unchanged-path scenario sensitivity. These are still assumptions, not fills.
 
 ### Missing instruments can hide exits and turnover
 

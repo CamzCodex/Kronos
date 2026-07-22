@@ -236,6 +236,10 @@ def test_sample_shape_and_values_are_rejected():
         ({"top_quantile_fraction": 1.0}, "strictly between"),
         ({"downside_threshold": np.nan}, "finite"),
         ({"quantile_columns": ((0.5, "q1"), (0.5, "q2"))}, "unique"),
+        (
+            {"quantile_columns": ((0.05, "actual_value"), (0.95, "q2"))},
+            "cannot replace",
+        ),
     ],
 )
 def test_invalid_metric_controls_are_rejected(change, message):
