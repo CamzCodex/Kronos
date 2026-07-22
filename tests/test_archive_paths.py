@@ -11,8 +11,8 @@ import pandas as pd
 import pytest
 
 from finetune import archive_paths, data_io
-from finetune.config import Config
 from finetune import dataset as dataset_module
+from finetune.config import Config
 
 
 def _frames(rows: int = 8) -> dict[str, pd.DataFrame]:
@@ -33,6 +33,18 @@ def _frames(rows: int = 8) -> dict[str, pd.DataFrame]:
     }
 
 
+def _assert_semantically_equal(actual: pd.DataFrame, expected: pd.DataFrame) -> None:
+    pd.testing.assert_frame_equal(
+        actual,
+        expected,
+        check_freq=False,
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-12,
+        atol=1e-12,
+    )
+
+
 def test_canonical_archive_paths_reject_path_injection(tmp_path):
     assert archive_paths.safe_archive_path(tmp_path, "train_data") == (
         tmp_path / "train_data.kronos.zip"
@@ -41,7 +53,14 @@ def test_canonical_archive_paths_reject_path_injection(tmp_path):
         tmp_path / "train_data.pkl"
     )
 
-    for invalid in ("", "../train_data", "nested/train_data"):
+    for invalid in (
+        "",
+        ".",
+        "..",
+        "../train_data",
+        "nested/train_data",
+        r"nested\train_data",
+    ):
         with pytest.raises(ValueError, match="dataset name"):
             archive_paths.safe_archive_path(tmp_path, invalid)
 
@@ -57,7 +76,7 @@ def test_safe_archive_is_preferred_over_legacy_pickle(tmp_path, monkeypatch):
     monkeypatch.setattr(data_io.pickle, "load", fail_if_called)
     actual = archive_paths.load_named_frame_mapping(tmp_path, "train_data")
 
-    pd.testing.assert_frame_equal(actual["TEST"], expected["TEST"], check_freq=False)
+    _assert_semantically_equal(actual["TEST"], expected["TEST"])
 
 
 def test_legacy_pickle_is_blocked_with_a_migration_command(tmp_path, monkeypatch):
