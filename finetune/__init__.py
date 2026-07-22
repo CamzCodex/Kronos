@@ -1,12 +1,6 @@
 """Fine-tuning support utilities for Kronos."""
 
-from . import data_io as _data_io
 from .archive_writer import save_frame_mapping
-
-# Keep the historical ``finetune.data_io.save_frame_mapping`` path on the
-# memory-bounded writer for package imports. The reader/migration functions in
-# data_io resolve this module global at call time as well.
-_data_io.save_frame_mapping = save_frame_mapping
 
 from .archive_paths import (
     legacy_pickle_path,
