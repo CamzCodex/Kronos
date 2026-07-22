@@ -203,7 +203,7 @@
 - alternatives: Remove the UI; preserve its debugger/all-interface/CORS/path defaults; infer production readiness from dependency-audit success; add ad hoc remote exposure without authentication.
 - evidence: `webui/security.py`, hardened launchers/routes, 37 Web UI security regressions, dependency audits, generated-output removal/ignore controls, and the Web UI adversarial review.
 - reasoning: A small explicit local trust boundary preserves useful demonstration access while removing avoidable local-file, browser, debugger, and silent-data-repair risks. It does not pretend that a development server is an authenticated service.
-- risks: Local model execution remains resource-intensive; checkpoint IDs are not revision-pinned in the UI; external browser assets and inline template code remain; local result files are mutable; structural validation is not canonical data or leakage approval.
+- risks: Local model execution remains resource-intensive; exact checkpoint revisions do not establish training provenance; external browser assets and inline template code remain; local result files are mutable; structural validation is not canonical data or leakage approval.
 - reversal trigger: A separately versioned remote-deployment architecture passes authentication, authorization, TLS, isolation, workload, serving, dependency, and security regression review without weakening the local defaults.
 - related commit: Introduced by `security/webui-local-boundary`
 - related PR: This phase's pull request
@@ -219,4 +219,17 @@
 - risks: Custom terms may be unavailable or expensive; public documentation does not prove first-known timestamps; the supported Python path is Windows-oriented; histories and delistings contain qualifications; corrections can change data; legal interpretation requires provider/counsel acceptance.
 - reversal trigger: Another provider offers equal or stronger point-in-time technical coverage under accepted durable-retention/publication terms at lower total acquisition risk, or Norgate declines the mandatory amendment/evidence fields.
 - related commit: Introduced by `docs/data-acquisition-closeout`
+- related PR: This phase's pull request
+
+## DEC-018 — Local runtime is pinned, measurable, and separate from market evidence
+
+- decision_id: `DEC-018`
+- date: 2026-07-22
+- decision: Package doctor/smoke/benchmark/Web UI entry points; pin every selectable released checkpoint pair to exact revisions; force predictor evaluation/inference mode; make “latest” mean the latest complete historical/realized window; and label every synthetic latency result as operational rather than financial evidence.
+- alternatives: Keep mutable `main` checkpoint loads; rely on callers to invoke `eval()`; keep stale oldest-row UI behavior; publish a single unqualified speed number; add unverified mixed precision, quantization, compilation, or KV caching as defaults.
+- evidence: `model/catalog.py`, `kronos_runtime/`, Web UI window/catalog regressions, 384 maintained tests, local package build, `docs/operations/LOCAL_RUNBOOK.md`, and the local-runtime adversarial review.
+- reasoning: Local pull/run readiness requires exact identities, one-command diagnostics, reproducible latency measurement, and truthful boundaries. Safe inference-mode improvements reduce avoidable overhead without changing default numerical precision or pretending to improve forecasting skill.
+- risks: Radeon behavior remains unmeasured here; vendor PyTorch support changes; exact checkpoints retain unknown training provenance; no major autoregressive acceleration is yet proved; the Web UI remains loopback-only.
+- reversal trigger: A versioned runtime path provides stronger cross-platform hardware support and materially faster inference while passing pinned numerical, package, security, and hardware-specific regression gates.
+- related commit: Introduced by `operational/local-release-readiness`
 - related PR: This phase's pull request

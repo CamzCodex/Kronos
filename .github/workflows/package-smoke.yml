@@ -46,7 +46,9 @@ jobs:
           import finetune
           import kronos_data
           import kronos_eval
+          import kronos_runtime
           import model
+          import webui
           from finetune import (
               archive_writer,
               load_frame_mapping,
@@ -67,6 +69,9 @@ jobs:
           assert ForecastRequest is not None
           assert ForecastResult is not None
           assert finetune is not None
+          assert kronos_runtime is not None
+          assert webui is not None
+          assert len(model.RELEASED_MODELS) == 3
           assert kronos_data.FEATURE_SCHEMA_VERSION == "1.0.0"
           assert callable(kronos_data.validate_bars)
           assert callable(kronos_data.build_dataset_manifest)
@@ -111,7 +116,9 @@ jobs:
           import finetune
           import kronos_data
           import kronos_eval
+          import kronos_runtime
           import model
+          import webui
           from finetune import archive_paths, archive_writer, backtest_io, data_io
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
@@ -119,11 +126,15 @@ jobs:
           finetune_imported_from = Path(finetune.__file__).resolve()
           data_imported_from = Path(kronos_data.__file__).resolve()
           evaluation_imported_from = Path(kronos_eval.__file__).resolve()
+          runtime_imported_from = Path(kronos_runtime.__file__).resolve()
+          webui_imported_from = Path(webui.__file__).resolve()
 
           assert not model_imported_from.is_relative_to(workspace)
           assert not finetune_imported_from.is_relative_to(workspace)
           assert not data_imported_from.is_relative_to(workspace)
           assert not evaluation_imported_from.is_relative_to(workspace)
+          assert not runtime_imported_from.is_relative_to(workspace)
+          assert not webui_imported_from.is_relative_to(workspace)
           assert version("kronos-timeseries") == model.__version__
           assert model.get_model_class("kronos") is model.Kronos
           assert model.ForecastRequest is not None
@@ -137,6 +148,7 @@ jobs:
           assert callable(kronos_eval.write_evaluation_fold_result)
           assert callable(kronos_eval.ExperimentRegistry)
           assert callable(kronos_data.assess_reference_source)
+          assert len(model.RELEASED_MODELS) == 3
           assert data_io.FORMAT_VERSION == 1
           assert callable(data_io.save_frame_mapping)
           assert data_io.save_frame_mapping is not archive_writer.save_frame_mapping
@@ -144,4 +156,10 @@ jobs:
           assert archive_paths.SAFE_ARCHIVE_SUFFIX == ".kronos.zip"
           assert callable(backtest_io.load_test_data)
           assert callable(backtest_io.save_prediction_signals)
+          assert (webui_imported_from.parent / "templates" / "index.html").is_file()
           PY
+
+      - name: Verify installed runtime entry point
+        run: |
+          cd "${RUNNER_TEMP}"
+          kronos-runtime doctor --device cpu

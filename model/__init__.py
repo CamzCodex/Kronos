@@ -3,6 +3,7 @@
 __version__ = "0.1.0.dev0"
 
 from . import kronos as _kronos
+from .catalog import DEFAULT_MODEL_KEY, RELEASED_MODELS, ReleasedModel, get_released_model
 from .forecast import (
     CandleIssue,
     CandleRepair,
@@ -35,6 +36,10 @@ __all__ = [
     "ForecastResult",
     "ForecastValidityReport",
     "SamplePathValidity",
+    "DEFAULT_MODEL_KEY",
+    "RELEASED_MODELS",
+    "ReleasedModel",
+    "get_released_model",
     "sample_from_logits",
     "top_k_top_p_filtering",
     "__version__",

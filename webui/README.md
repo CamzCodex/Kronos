@@ -22,7 +22,7 @@ python -m pip install -e ".[webui]"
 
 ### Method 1: Start as a module
 ```bash
-python -m webui.run
+kronos-web --data-dir ./data
 ```
 
 ### Method 2: Start with Shell script
@@ -39,6 +39,9 @@ python app.py
 ```
 
 After successful startup, visit http://localhost:7070
+
+All selectable checkpoints are bound to exact model and tokenizer revisions. Use
+`kronos-runtime benchmark` before selecting a larger checkpoint for daily local use.
 
 ## 🔒 Security Boundary
 
@@ -139,7 +142,7 @@ The system automatically provides comparison analysis between prediction results
 
 ### Common Issues
 1. **Port occupied**: Modify port number in app.py
-2. **Missing dependencies**: Run `pip install -r requirements.txt`
+2. **Missing dependencies**: Run `python -m pip install -e ".[webui]"` from the repository root
 3. **Model loading failed**: Check the model dependency, network access, and model ID
 4. **Data format error**: Ensure data column names and format are correct
 

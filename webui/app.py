@@ -16,10 +16,11 @@ from werkzeug.exceptions import RequestEntityTooLarge
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    from model import Kronos, KronosTokenizer, KronosPredictor
+    from model import RELEASED_MODELS, Kronos, KronosPredictor, KronosTokenizer
     MODEL_AVAILABLE = True
 except ImportError:
     MODEL_AVAILABLE = False
+    RELEASED_MODELS = {}
     print("Warning: Kronos model cannot be imported")
 
 if __package__:
@@ -51,7 +52,7 @@ app.config.update(
 app.logger.setLevel(logging.INFO)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = Path(os.environ.get("KRONOS_DATA_DIR", PROJECT_ROOT / "data")).expanduser().resolve()
 RESULTS_DIR = Path(__file__).resolve().parent / "prediction_results"
 MAX_DATA_FILE_BYTES = 64 * 1024 * 1024
 MAX_DATA_ROWS = 250_000
@@ -109,31 +110,49 @@ predictor = None
 
 # Available model configurations
 AVAILABLE_MODELS = {
-    'kronos-mini': {
-        'name': 'Kronos-mini',
-        'model_id': 'NeoQuasar/Kronos-mini',
-        'tokenizer_id': 'NeoQuasar/Kronos-Tokenizer-2k',
-        'context_length': 2048,
-        'params': '4.1M',
-        'description': 'Lightweight model, suitable for fast prediction'
-    },
-    'kronos-small': {
-        'name': 'Kronos-small',
-        'model_id': 'NeoQuasar/Kronos-small',
-        'tokenizer_id': 'NeoQuasar/Kronos-Tokenizer-base',
-        'context_length': 512,
-        'params': '24.7M',
-        'description': 'Small model, balanced performance and speed'
-    },
-    'kronos-base': {
-        'name': 'Kronos-base',
-        'model_id': 'NeoQuasar/Kronos-base',
-        'tokenizer_id': 'NeoQuasar/Kronos-Tokenizer-base',
-        'context_length': 512,
-        'params': '102.3M',
-        'description': 'Base model, provides better prediction quality'
+    key: {
+        'name': definition.name,
+        'model_id': definition.model_id,
+        'model_revision': definition.model_revision,
+        'tokenizer_id': definition.tokenizer_id,
+        'tokenizer_revision': definition.tokenizer_revision,
+        'context_length': definition.context_length,
+        'params': definition.parameter_count,
+        'description': definition.description,
     }
+    for key, definition in RELEASED_MODELS.items()
 }
+
+
+def select_prediction_window(df, lookback, pred_len, start_date=None):
+    """Select one causal historical window and its immediately following truth."""
+
+    required_rows = lookback + pred_len
+    if len(df) < required_rows:
+        raise RequestValidationError(
+            f"Insufficient data length, need at least {required_rows} rows"
+        )
+    if start_date:
+        start_timestamp = pd.to_datetime(start_date, utc=True)
+        matches = np.flatnonzero((df['timestamps'] >= start_timestamp).to_numpy())
+        if not len(matches):
+            raise RequestValidationError("No data exists at or after start_date")
+        start_index = int(matches[0])
+        if len(df) - start_index < required_rows:
+            raise RequestValidationError(
+                f"Insufficient data from start time {start_timestamp.isoformat()}, "
+                f"need at least {required_rows} rows"
+            )
+    else:
+        # The latest comparable forecast ends at the final observed row.  Using
+        # the first rows while labelling them latest silently evaluated stale data.
+        start_index = len(df) - required_rows
+
+    historical = df.iloc[start_index : start_index + lookback].copy()
+    realized = df.iloc[
+        start_index + lookback : start_index + required_rows
+    ].copy()
+    return historical, realized, start_index
 
 def load_data_files():
     """Scan data directory and return available data files"""
@@ -348,15 +367,13 @@ def create_prediction_chart(df, pred_df, lookback, pred_len, actual_df=None, his
     # Add prediction data (candlestick chart)
     if pred_df is not None and len(pred_df) > 0:
         # Calculate prediction data timestamps - ensure continuity with historical data
-        if 'timestamps' in df.columns and len(historical_df) > 0:
-            # Start from the last timestamp of historical data, create prediction timestamps with the same time interval
+        if isinstance(pred_df.index, pd.DatetimeIndex):
+            pred_timestamps = pred_df.index
+        elif 'timestamps' in df.columns and len(historical_df) > 0:
             last_timestamp = historical_df['timestamps'].iloc[-1]
             time_diff = df['timestamps'].iloc[1] - df['timestamps'].iloc[0] if len(df) > 1 else pd.Timedelta(hours=1)
-            
             pred_timestamps = pd.date_range(
-                start=last_timestamp + time_diff,
-                periods=len(pred_df),
-                freq=time_diff
+                start=last_timestamp + time_diff, periods=len(pred_df), freq=time_diff
             )
         else:
             # If no timestamps, use index
@@ -376,22 +393,10 @@ def create_prediction_chart(df, pred_df, lookback, pred_len, actual_df=None, his
     # Add actual data for comparison (if exists)
     if actual_df is not None and len(actual_df) > 0:
         # Actual data should be in the same time period as prediction data
-        if 'timestamps' in df.columns:
-            # Actual data should use the same timestamps as prediction data to ensure time alignment
-            if 'pred_timestamps' in locals():
-                actual_timestamps = pred_timestamps
-            else:
-                # If no prediction timestamps, calculate from the last timestamp of historical data
-                if len(historical_df) > 0:
-                    last_timestamp = historical_df['timestamps'].iloc[-1]
-                    time_diff = df['timestamps'].iloc[1] - df['timestamps'].iloc[0] if len(df) > 1 else pd.Timedelta(hours=1)
-                    actual_timestamps = pd.date_range(
-                        start=last_timestamp + time_diff,
-                        periods=len(actual_df),
-                        freq=time_diff
-                    )
-                else:
-                    actual_timestamps = range(len(historical_df), len(historical_df) + len(actual_df))
+        if 'timestamps' in actual_df.columns:
+            actual_timestamps = actual_df['timestamps']
+        elif 'timestamps' in df.columns and 'pred_timestamps' in locals():
+            actual_timestamps = pred_timestamps
         else:
             actual_timestamps = range(len(historical_df), len(historical_df) + len(actual_df))
         
@@ -542,10 +547,9 @@ def predict():
         if error:
             return jsonify({'error': error}), 400
         
-        if len(df) < lookback + pred_len:
-            return jsonify({
-                'error': f'Insufficient data length, need at least {lookback + pred_len} rows'
-            }), 400
+        historical_df, actual_df, historical_start_idx = select_prediction_window(
+            df, lookback, pred_len, start_date
+        )
         
         # Perform prediction
         if MODEL_AVAILABLE and predictor is not None:
@@ -556,38 +560,14 @@ def predict():
                 if 'volume' in df.columns:
                     required_cols.append('volume')
                 
-                # Process time period selection
-                if start_date:
-                    # Custom time period - fix logic: use data within selected window
-                    start_dt = pd.to_datetime(start_date, utc=True)
-                    
-                    # Find data after start time
-                    mask = df['timestamps'] >= start_dt
-                    time_range_df = df[mask]
-                    
-                    # Ensure sufficient data: lookback + pred_len
-                    if len(time_range_df) < lookback + pred_len:
-                        return jsonify({'error': f'Insufficient data from start time {start_dt.strftime("%Y-%m-%d %H:%M")}, need at least {lookback + pred_len} data points, currently only {len(time_range_df)} available'}), 400
-                    
-                    # Use first lookback data points within selected window for prediction
-                    x_df = time_range_df.iloc[:lookback][required_cols]
-                    x_timestamp = time_range_df.iloc[:lookback]['timestamps']
-                    
-                    # Use last pred_len data points within selected window as actual values
-                    y_timestamp = time_range_df.iloc[lookback:lookback+pred_len]['timestamps']
-                    
-                    # Calculate actual time period length
-                    start_timestamp = time_range_df['timestamps'].iloc[0]
-                    end_timestamp = time_range_df['timestamps'].iloc[lookback+pred_len-1]
-                    time_span = end_timestamp - start_timestamp
-                    
-                    prediction_type = f"Kronos model prediction (within selected window: first {lookback} data points for prediction, last {pred_len} data points for comparison, time span: {time_span})"
-                else:
-                    # Use latest data
-                    x_df = df.iloc[:lookback][required_cols]
-                    x_timestamp = df.iloc[:lookback]['timestamps']
-                    y_timestamp = df.iloc[lookback:lookback+pred_len]['timestamps']
-                    prediction_type = "Kronos model prediction (latest data)"
+                x_df = historical_df[required_cols]
+                x_timestamp = historical_df['timestamps'].reset_index(drop=True)
+                y_timestamp = actual_df['timestamps'].reset_index(drop=True)
+                prediction_type = (
+                    "Kronos model prediction (selected evaluable window)"
+                    if start_date
+                    else "Kronos model prediction (latest evaluable window)"
+                )
                 
                 # Ensure timestamps are Series format, not DatetimeIndex, to avoid .dt attribute error in Kronos model
                 if isinstance(x_timestamp, pd.DatetimeIndex):
@@ -612,91 +592,22 @@ def predict():
             return jsonify({'error': 'Kronos model not loaded, please load model first'}), 400
         
         # Prepare actual data for comparison (if exists)
-        actual_data = []
-        actual_df = None
-        
-        if start_date:  # Custom time period
-            # Fix logic: use data within selected window
-            # Prediction uses first 400 data points within selected window
-            # Actual data should be last 120 data points within selected window
-            start_dt = pd.to_datetime(start_date, utc=True)
-            
-            # Find data starting from start_date
-            mask = df['timestamps'] >= start_dt
-            time_range_df = df[mask]
-            
-            if len(time_range_df) >= lookback + pred_len:
-                # Get last 120 data points within selected window as actual values
-                actual_df = time_range_df.iloc[lookback:lookback+pred_len]
-                
-                for i, (_, row) in enumerate(actual_df.iterrows()):
-                    actual_data.append({
-                        'timestamp': row['timestamps'].isoformat(),
-                        'open': float(row['open']),
-                        'high': float(row['high']),
-                        'low': float(row['low']),
-                        'close': float(row['close']),
-                        'volume': float(row['volume']) if 'volume' in row else 0,
-                        'amount': float(row['amount']) if 'amount' in row else 0
-                    })
-        else:  # Latest data
-            # Prediction uses first 400 data points
-            # Actual data should be 120 data points after first 400 data points
-            if len(df) >= lookback + pred_len:
-                actual_df = df.iloc[lookback:lookback+pred_len]
-                for i, (_, row) in enumerate(actual_df.iterrows()):
-                    actual_data.append({
-                        'timestamp': row['timestamps'].isoformat(),
-                        'open': float(row['open']),
-                        'high': float(row['high']),
-                        'low': float(row['low']),
-                        'close': float(row['close']),
-                        'volume': float(row['volume']) if 'volume' in row else 0,
-                        'amount': float(row['amount']) if 'amount' in row else 0
-                    })
-        
-        # Create chart - pass historical data start position
-        if start_date:
-            # Custom time period: find starting position of historical data in original df
-            start_dt = pd.to_datetime(start_date, utc=True)
-            mask = df['timestamps'] >= start_dt
-            historical_start_idx = df[mask].index[0] if len(df[mask]) > 0 else 0
-        else:
-            # Latest data: start from beginning
-            historical_start_idx = 0
+        actual_data = [
+            {
+                'timestamp': row['timestamps'].isoformat(),
+                'open': float(row['open']),
+                'high': float(row['high']),
+                'low': float(row['low']),
+                'close': float(row['close']),
+                'volume': float(row['volume']) if 'volume' in row else 0,
+                'amount': float(row['amount']) if 'amount' in row else 0,
+            }
+            for _, row in actual_df.iterrows()
+        ]
         
         chart_json = create_prediction_chart(df, pred_df, lookback, pred_len, actual_df, historical_start_idx)
         
-        # Prepare prediction result data - fix timestamp calculation logic
-        if 'timestamps' in df.columns:
-            if start_date:
-                # Custom time period: use selected window data to calculate timestamps
-                start_dt = pd.to_datetime(start_date, utc=True)
-                mask = df['timestamps'] >= start_dt
-                time_range_df = df[mask]
-                
-                if len(time_range_df) >= lookback:
-                    # Calculate prediction timestamps starting from last time point of selected window
-                    last_timestamp = time_range_df['timestamps'].iloc[lookback-1]
-                    time_diff = df['timestamps'].iloc[1] - df['timestamps'].iloc[0]
-                    future_timestamps = pd.date_range(
-                        start=last_timestamp + time_diff,
-                        periods=pred_len,
-                        freq=time_diff
-                    )
-                else:
-                    future_timestamps = []
-            else:
-                # Latest data: calculate from last time point of entire data file
-                last_timestamp = df['timestamps'].iloc[-1]
-                time_diff = df['timestamps'].iloc[1] - df['timestamps'].iloc[0]
-                future_timestamps = pd.date_range(
-                    start=last_timestamp + time_diff,
-                    periods=pred_len,
-                    freq=time_diff
-                )
-        else:
-            future_timestamps = range(len(df), len(df) + pred_len)
+        future_timestamps = pd.DatetimeIndex(y_timestamp)
         
         prediction_results = []
         for i, (_, row) in enumerate(pred_df.iterrows()):
@@ -765,11 +676,25 @@ def load_model():
         model_config = AVAILABLE_MODELS[model_key]
         
         # Load tokenizer and model
-        tokenizer = KronosTokenizer.from_pretrained(model_config['tokenizer_id'])
-        model = Kronos.from_pretrained(model_config['model_id'])
+        tokenizer = KronosTokenizer.from_pretrained(
+            model_config['tokenizer_id'],
+            revision=model_config['tokenizer_revision'],
+        )
+        model = Kronos.from_pretrained(
+            model_config['model_id'],
+            revision=model_config['model_revision'],
+        )
         
         # Create predictor
-        predictor = KronosPredictor(model, tokenizer, device=device, max_context=model_config['context_length'])
+        predictor = KronosPredictor(
+            model,
+            tokenizer,
+            device=device,
+            max_context=model_config['context_length'],
+            model_version=model_config['model_id'],
+            model_revision=model_config['model_revision'],
+            tokenizer_revision=model_config['tokenizer_revision'],
+        )
         
         return jsonify({
             'success': True,
@@ -778,7 +703,9 @@ def load_model():
                 'name': model_config['name'],
                 'params': model_config['params'],
                 'context_length': model_config['context_length'],
-                'description': model_config['description']
+                'description': model_config['description'],
+                'model_revision': model_config['model_revision'],
+                'tokenizer_revision': model_config['tokenizer_revision'],
             }
         })
         

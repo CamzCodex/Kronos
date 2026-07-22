@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from webui import app as webapp
@@ -339,3 +341,95 @@ def test_generated_prediction_results_are_ignored() -> None:
     ignore_rules = (project_root / ".gitignore").read_text(encoding="utf-8")
 
     assert "webui/prediction_results/" in ignore_rules.splitlines()
+
+
+def test_latest_window_uses_the_end_of_the_file() -> None:
+    frame = pd.DataFrame(
+        {
+            "timestamps": pd.date_range("2025-01-01", periods=10, freq="D", tz="UTC"),
+            "open": np.arange(10, dtype=float) + 100,
+            "high": np.arange(10, dtype=float) + 102,
+            "low": np.arange(10, dtype=float) + 99,
+            "close": np.arange(10, dtype=float) + 101,
+        }
+    )
+
+    historical, realized, start_index = webapp.select_prediction_window(frame, 4, 2)
+
+    assert start_index == 4
+    assert historical["open"].tolist() == [104.0, 105.0, 106.0, 107.0]
+    assert realized["open"].tolist() == [108.0, 109.0]
+
+
+def test_selected_window_truth_immediately_follows_history() -> None:
+    frame = pd.DataFrame(
+        {
+            "timestamps": pd.date_range("2025-01-01", periods=10, freq="D", tz="UTC"),
+            "open": np.arange(10, dtype=float) + 100,
+        }
+    )
+
+    historical, realized, start_index = webapp.select_prediction_window(
+        frame, 3, 2, "2025-01-04T00:00:00Z"
+    )
+
+    assert start_index == 3
+    assert historical["open"].tolist() == [103.0, 104.0, 105.0]
+    assert realized["open"].tolist() == [106.0, 107.0]
+    assert historical["timestamps"].max() < realized["timestamps"].min()
+
+
+def test_available_models_expose_exact_revisions(client) -> None:
+    response = client.get("/api/available-models")
+    models = response.get_json()["models"]
+
+    assert response.status_code == 200
+    for definition in models.values():
+        assert len(definition["model_revision"]) == 40
+        assert len(definition["tokenizer_revision"]) == 40
+
+
+def test_model_loader_uses_catalog_revisions(
+    client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls = []
+
+    class FakeTokenizer:
+        @classmethod
+        def from_pretrained(cls, model_id, revision):
+            calls.append(("tokenizer", model_id, revision))
+            return object()
+
+    class FakeModel:
+        @classmethod
+        def from_pretrained(cls, model_id, revision):
+            calls.append(("model", model_id, revision))
+            return object()
+
+    class FakePredictor:
+        def __init__(self, model, tokenizer, **kwargs):
+            calls.append(("predictor", kwargs))
+
+    monkeypatch.setattr(webapp, "MODEL_AVAILABLE", True)
+    monkeypatch.setattr(webapp, "KronosTokenizer", FakeTokenizer)
+    monkeypatch.setattr(webapp, "Kronos", FakeModel)
+    monkeypatch.setattr(webapp, "KronosPredictor", FakePredictor)
+
+    response = client.post(
+        "/api/load-model", json={"model_key": "kronos-small", "device": "cpu"}
+    )
+    definition = webapp.AVAILABLE_MODELS["kronos-small"]
+
+    assert response.status_code == 200
+    assert calls[0] == (
+        "tokenizer",
+        definition["tokenizer_id"],
+        definition["tokenizer_revision"],
+    )
+    assert calls[1] == (
+        "model",
+        definition["model_id"],
+        definition["model_revision"],
+    )
+    assert calls[2][1]["model_revision"] == definition["model_revision"]
+    assert calls[2][1]["tokenizer_revision"] == definition["tokenizer_revision"]
