@@ -72,7 +72,7 @@ The safe archive foundation merged in PR #8. Qlib preprocessing and training wir
 ## Phase 5 — reproducible financial evaluation
 
 - [x] Build deterministic expanding/rolling split plans with immutable fold identity; real benchmark execution remains open.
-- [ ] Compare against last-value, drift, momentum, ARIMA, and volatility baselines.
+- [x] Implement frozen identical-information last-value, drift, seasonal, rolling, smoothing, momentum, mean-reversion, linear, tree, ARIMA-style, and volatility forecasts; real comparisons remain open.
 - [ ] Report directional accuracy, calibration, rank correlation, and price error.
 - [ ] Model fees, spreads, slippage, turnover, and market impact in strategy tests.
 - [x] Separate development roles from one fixed embargoed final-holdout boundary; physical access enforcement and the final run remain open.

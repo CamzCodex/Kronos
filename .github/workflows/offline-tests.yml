@@ -54,4 +54,5 @@ jobs:
             tests/test_market_data_validation.py \
             tests/test_dataset_manifests.py \
             tests/test_leakage_auditor.py \
-            tests/test_walk_forward.py
+            tests/test_walk_forward.py \
+            tests/test_baselines.py

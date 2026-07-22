@@ -62,19 +62,19 @@ Status date: 2026-07-22
 - related PR: `#15`
 - related experiment: None
 
-## GAP-005 — No walk-forward and baseline engine
+## GAP-005 — No complete walk-forward evaluation runner
 
 - gap_id: `GAP-005`
-- title: Split protocol exists but comparable out-of-sample execution is absent
-- description: The phase branch implements deterministic expanding/rolling plans, optional calibration, cross-fold role isolation, purge/embargo records, a fixed final holdout, immutable artifacts, and identity-bound passed-audit attachment. Forecast execution, mandatory baselines, calibration metrics, applied costs, robustness, and physical final-holdout isolation are not implemented.
+- title: Split and baseline protocols exist but comparable out-of-sample execution is absent
+- description: PR #16 implements deterministic expanding/rolling plans, optional calibration, cross-fold role isolation, purge/embargo records, a fixed final holdout, immutable artifacts, and identity-bound passed-audit attachment. The active baseline branch implements all eleven required frozen, identical-information forecast comparators. Common forecast execution, metrics, applied costs, robustness, and physical final-holdout isolation are not implemented.
 - severity: Critical
 - impact: The central mission question cannot be answered.
-- evidence: `kronos_eval/walk_forward.py`, walk-forward regression tests, protocol document, and Phase 5A adversarial review.
+- evidence: `kronos_eval/walk_forward.py`, `kronos_eval/baselines.py`, their regression tests, protocol documents, and Phase 5A/5B adversarial reviews.
 - owner: Unassigned
 - status: Partially resolved — evaluation runner remains a promotion blocker
-- required work: Baseline/metric/cost runner, verified real fold audits, final-holdout enforcement, evaluation CI smoke
+- required work: Common metric/cost/robustness runner, feature-matched conventional comparators, verified real fold audits, final-holdout enforcement, evaluation CI smoke
 - blocking decision: Model usefulness and fine-tuning gate
-- related PR: This phase's pull request
+- related PR: `#16` and this phase's pull request
 - related experiment: None
 
 ## GAP-006 — No zero-shot reference benchmark

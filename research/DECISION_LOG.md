@@ -103,3 +103,16 @@
 - reversal trigger: A versioned alternative resampling protocol with explicit dependence correction, contamination tests, and evidence that it strengthens rather than inflates inference.
 - related commit: Introduced by `evaluation/walk-forward-engine`
 - related PR: This phase's pull request
+
+## DEC-009 — Mandatory baselines share one frozen information contract
+
+- decision_id: `DEC-009`
+- date: 2026-07-22
+- decision: Run all eleven required v1 forecast baselines from one validated OHLCVA frame and timestamp set; hash the exact common information set and frozen method controls; refuse partial-suite execution; and label deterministic one-path summaries as degenerate rather than calibrated probabilities.
+- alternatives: Give each method independently loaded data; silently omit failing baselines; tune controls on test/final periods; report deterministic signs as forecast probabilities.
+- evidence: `kronos_eval/baselines.py`, baseline regression tests, the baseline-suite specification, and the Phase 5B adversarial review.
+- reasoning: Identical observation availability and immutable controls are necessary for fair attribution. All-or-nothing execution prevents weak or failed comparators from disappearing after results are observed, while explicit degeneracy prevents false calibration claims.
+- risks: Most simple methods use close only even though Kronos can use all OHLCVA fields; point-forecast baselines do not test distribution calibration; frozen defaults may not be the strongest conventional comparator; recursive tree/AR paths can amplify error.
+- reversal trigger: A versioned baseline-suite contract with pre-registered controls and tests that strengthens fairness without using evaluation or final-holdout outcomes.
+- related commit: Introduced by `evaluation/baseline-suite`
+- related PR: This phase's pull request
