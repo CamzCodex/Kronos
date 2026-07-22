@@ -241,7 +241,7 @@ The finetuning process is divided into four main steps:
 All settings for data, training, and model paths are centralized in `finetune/config.py`. Before running any scripts, please **modify the following paths** according to your environment:
 
 *   `qlib_data_path`: Path to your local Qlib data directory.
-*   `dataset_path`: Directory where the processed train/validation/test pickle files will be saved.
+*   `dataset_path`: Directory where the processed train/validation/test `.kronos.zip` archives will be saved.
 *   `save_path`: Base directory for saving model checkpoints.
 *   `backtest_result_path`: Directory for saving backtesting results.
 *   `pretrained_tokenizer_path` and `pretrained_predictor_path`: Paths to the pre-trained models you want to start from (can be local paths or Hugging Face model names).
@@ -250,17 +250,19 @@ You can also adjust other parameters like `instrument`, `train_time_range`, `epo
 
 ### Step 2: Prepare the Dataset
 
-Run the data preprocessing script. This script will load raw market data from your Qlib directory, process it, split it into training, validation, and test sets, and save them as pickle files.
+Run the data preprocessing script. This script will load raw market data from your Qlib directory, process it, split it into training, validation, and test sets, and save versioned, checksummed `.kronos.zip` archives.
 
 ```shell
 python finetune/qlib_data_preprocess.py
 ```
 
-After running, you will find `train_data.pkl`, `val_data.pkl`, and `test_data.pkl` in the directory specified by `dataset_path` in your config.
+After running, you will find `train_data.kronos.zip`, `val_data.kronos.zip`, and `test_data.kronos.zip` in the directory specified by `dataset_path` in your config. Legacy pickle loading remains disabled by default; see [`finetune/SAFE_DATA_FORMAT.md`](finetune/SAFE_DATA_FORMAT.md) for the explicitly trusted migration path.
 
 ### Step 3: Run the Finetuning
 
 The finetuning process consists of two stages: finetuning the tokenizer and then the predictor. Both training scripts are designed for multi-GPU training using `torchrun`.
+
+> **Research-integrity warning:** the default date ranges in `finetune/config.py` overlap beyond their stated lookback purpose. They are demonstration settings and must not be used to claim out-of-sample performance. Fine-tuning and benchmark promotion are blocked until the leakage auditor and non-overlapping split contract are implemented.
 
 #### 3.1 Finetune the Tokenizer
 
