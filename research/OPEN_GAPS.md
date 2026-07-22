@@ -51,30 +51,30 @@ Status date: 2026-07-22
 
 - gap_id: `GAP-004`
 - title: Typed raw paths exist but calibration and evaluation integration are absent
-- description: The phase branch adds raw samples, typed provenance, quantiles, return distributions, isolated generators, raw/projected distinction, and repair reporting while retaining the legacy mean-only wrapper. No out-of-sample run has established calibration, invalid-path behavior, or incremental information.
+- description: PR #15 adds raw samples, typed provenance, quantiles, return distributions, isolated generators, raw/projected distinction, and repair reporting while retaining the legacy mean-only wrapper. No out-of-sample run has established calibration, invalid-path behavior, or incremental information.
 - severity: High
 - impact: Calibration cannot be evaluated and invalid generated candles may be hidden or discarded inconsistently.
 - evidence: `model/forecast.py`, `docs/inference/PROBABILISTIC_FORECAST_API.md`, and the Phase 4 adversarial review.
 - owner: Unassigned
-- status: Partially resolved — phase CI, checkpoint regression, and evaluation integration remain blockers
-- required work: Pass all phase gates; bind verified registry provenance; evaluate calibration and repair sensitivity on every walk-forward fold.
+- status: Partially resolved — evaluation integration and empirical calibration remain blockers
+- required work: Bind verified registry provenance; evaluate calibration and repair sensitivity on every walk-forward fold.
 - blocking decision: Probabilistic benchmark
-- related PR: This phase's pull request
+- related PR: `#15`
 - related experiment: None
 
 ## GAP-005 — No walk-forward and baseline engine
 
 - gap_id: `GAP-005`
-- title: Comparable out-of-sample evaluation absent
-- description: Expanding/rolling folds, purge/embargo, mandatory baselines, calibration metrics, costs, robustness, and final holdout are not implemented.
+- title: Split protocol exists but comparable out-of-sample execution is absent
+- description: The phase branch implements deterministic expanding/rolling plans, optional calibration, cross-fold role isolation, purge/embargo records, a fixed final holdout, immutable artifacts, and identity-bound passed-audit attachment. Forecast execution, mandatory baselines, calibration metrics, applied costs, robustness, and physical final-holdout isolation are not implemented.
 - severity: Critical
 - impact: The central mission question cannot be answered.
-- evidence: Repository inventory and `HARDENING_ROADMAP.md` Phase 5 remains open.
+- evidence: `kronos_eval/walk_forward.py`, walk-forward regression tests, protocol document, and Phase 5A adversarial review.
 - owner: Unassigned
-- status: Open — promotion blocker
-- required work: Walk-forward engine, baseline suite, evaluation CI smoke
+- status: Partially resolved — evaluation runner remains a promotion blocker
+- required work: Baseline/metric/cost runner, verified real fold audits, final-holdout enforcement, evaluation CI smoke
 - blocking decision: Model usefulness and fine-tuning gate
-- related PR: None
+- related PR: This phase's pull request
 - related experiment: None
 
 ## GAP-006 — No zero-shot reference benchmark
@@ -119,5 +119,20 @@ Status date: 2026-07-22
 - status: Open
 - required work: Trace upstream primary documentation and record known/unknown provenance in the model card.
 - blocking decision: Strength of benchmark independence claim
+- related PR: None
+- related experiment: None
+
+## GAP-009 — Packaging license metadata deprecation
+
+- gap_id: `GAP-009`
+- title: Setuptools license table and classifier emit deprecation warnings
+- description: Local sdist/wheel builds report that the TOML license table and MIT classifier should migrate to an SPDX license expression before the stated 2027-02-18 enforcement date.
+- severity: Low
+- impact: No current build failure, but a future setuptools release can stop accepting the existing metadata.
+- evidence: Local Phase 4 package build output from current `pyproject.toml`; package smoke remains green.
+- owner: Unassigned
+- status: Open — non-blocking
+- required work: Make a focused packaging-metadata PR, verify published metadata, sdist, wheel, and supported Python imports.
+- blocking decision: None for research evaluation; blocks future packaging-readiness claim after the enforcement date.
 - related PR: None
 - related experiment: None

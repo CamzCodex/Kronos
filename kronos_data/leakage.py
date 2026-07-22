@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -13,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 from .adjustments import coerce_adjustment_policy
+from .hashing import hash_configuration
 
 
 class AuditSeverity(str, Enum):
@@ -57,6 +60,8 @@ class LeakageAuditResult:
     dataset_id: str
     code_commit: str
     audited_at: str
+    audit_id: str
+    split_hash: str
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -67,6 +72,8 @@ class LeakageAuditResult:
             "dataset_id": self.dataset_id,
             "code_commit": self.code_commit,
             "audited_at": self.audited_at,
+            "audit_id": self.audit_id,
+            "split_hash": self.split_hash,
         }
 
 
@@ -115,6 +122,7 @@ class LeakageAuditSpec:
     corporate_actions: pd.DataFrame = field(default_factory=pd.DataFrame)
     required_embargo: timedelta = timedelta(0)
     require_final_holdout_evaluation: bool = False
+    require_calibration: bool = True
     row_limit: int = 20
 
     def __post_init__(self) -> None:
@@ -122,9 +130,127 @@ class LeakageAuditSpec:
             raise ValueError("required_embargo cannot be negative")
         if self.row_limit < 1:
             raise ValueError("row_limit must be at least 1")
+        if not isinstance(self.require_calibration, bool):
+            raise TypeError("require_calibration must be a boolean")
 
 
-_CHECKS = (
+def hash_split_boundaries(splits: tuple[SplitBoundary, ...]) -> str:
+    """Return a deterministic identity for the declared target boundaries."""
+
+    payload = []
+    for boundary in splits:
+        role = _role(boundary.role)
+        start = _timestamp(boundary.target_start)
+        end = _timestamp(boundary.target_end)
+        payload.append(
+            {
+                "name": str(boundary.name),
+                "role": role.value if role is not None else str(boundary.role),
+                "target_start": (
+                    start.isoformat() if start is not None else str(boundary.target_start)
+                ),
+                "target_end": end.isoformat() if end is not None else str(boundary.target_end),
+            }
+        )
+    encoded = json.dumps(
+        sorted(payload, key=lambda item: (item["name"], item["role"])),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _audit_identity(spec: LeakageAuditSpec, split_hash: str) -> str:
+    probes = []
+    for probe in spec.normalization_probes:
+        normalizer_name = getattr(probe.normalizer, "__qualname__", type(probe.normalizer).__name__)
+        normalizer_module = getattr(probe.normalizer, "__module__", "Unknown")
+        probes.append(
+            {
+                "frame_hash": _audit_frame_hash(probe.frame),
+                "prediction_position": probe.prediction_position,
+                "feature_columns": list(probe.feature_columns),
+                "normalizer": f"{normalizer_module}.{normalizer_name}",
+                "rtol": probe.rtol,
+                "atol": probe.atol,
+            }
+        )
+    payload = {
+        "dataset_id": spec.dataset_id,
+        "code_commit": spec.code_commit,
+        "audited_at": str(spec.audited_at),
+        "split_hash": split_hash,
+        "sample_windows_hash": _audit_frame_hash(spec.sample_windows),
+        "feature_provenance_hash": _audit_frame_hash(spec.feature_provenance),
+        "universe_policy": {
+            "point_in_time_membership": spec.universe_policy.point_in_time_membership,
+            "includes_delisted": spec.universe_policy.includes_delisted,
+            "stable_identifier_mapping": spec.universe_policy.stable_identifier_mapping,
+            "membership_source": spec.universe_policy.membership_source,
+        },
+        "universe_membership_hash": _audit_frame_hash(spec.universe_membership),
+        "selection_events_hash": _audit_frame_hash(spec.selection_events),
+        "final_config_frozen_at": str(spec.final_config_frozen_at),
+        "normalization_probes": probes,
+        "expected_feature_names": list(spec.expected_feature_names),
+        "adjustment_policy": spec.adjustment_policy,
+        "corporate_action_provenance_complete": (
+            spec.corporate_action_provenance_complete
+        ),
+        "corporate_actions_hash": _audit_frame_hash(spec.corporate_actions),
+        "required_embargo_seconds": spec.required_embargo.total_seconds(),
+        "require_final_holdout_evaluation": spec.require_final_holdout_evaluation,
+        "require_calibration": spec.require_calibration,
+    }
+    return f"kla-{hash_configuration(payload)[:24]}"
+
+
+def _audit_frame_hash(frame: pd.DataFrame) -> str:
+    payload = {
+        "columns": [str(column) for column in frame.columns],
+        "index": [_audit_scalar(value) for value in frame.index],
+        "records": [
+            [_audit_scalar(value) for value in row]
+            for row in frame.itertuples(index=False, name=None)
+        ],
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _audit_scalar(value: Any) -> Any:
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, pd.Timestamp):
+        if pd.isna(value):
+            return {"missing": "NaT"}
+        if value.tzinfo is None or value.utcoffset() is None:
+            return {"naive_timestamp": value.isoformat()}
+        return value.tz_convert("UTC").isoformat()
+    if isinstance(value, (np.bool_, np.integer)):
+        return value.item()
+    if isinstance(value, (float, np.floating)):
+        numeric = float(value)
+        if np.isnan(numeric):
+            return {"non_finite": "NaN"}
+        if np.isposinf(numeric):
+            return {"non_finite": "Infinity"}
+        if np.isneginf(numeric):
+            return {"non_finite": "-Infinity"}
+        return numeric
+    missing = pd.isna(value)
+    if isinstance(missing, (bool, np.bool_)) and bool(missing):
+        return {"missing": type(value).__name__}
+    return {"type": type(value).__name__, "value": str(value)}
+
+
+REQUIRED_LEAKAGE_CHECKS = (
     "audit_identity",
     "split_boundaries",
     "embargo",
@@ -295,12 +421,18 @@ def _audit_splits(
         )
     for role in SplitRole:
         count = roles.count(role)
+        if role is SplitRole.CALIBRATION and not spec.require_calibration:
+            if count <= 1:
+                continue
+            expected_message = "optional calibration may be declared at most once"
+        else:
+            expected_message = "each required split role must be declared exactly once"
         if count != 1:
             findings.append(
                 AuditFinding(
                     code="split_role_count_invalid",
                     severity=AuditSeverity.ERROR,
-                    message="each required split role must be declared exactly once",
+                    message=expected_message,
                     count=count,
                     details={"role": role.value},
                 )
@@ -974,6 +1106,8 @@ def audit_leakage(spec: LeakageAuditSpec) -> LeakageAuditResult:
     """Run every configured causal check; any error invalidates the audit."""
 
     findings: list[AuditFinding] = []
+    split_hash = hash_split_boundaries(spec.splits)
+    audit_id = _audit_identity(spec, split_hash)
     audited_at = _timestamp(spec.audited_at)
     if not spec.dataset_id.strip():
         findings.append(
@@ -1016,10 +1150,12 @@ def audit_leakage(spec: LeakageAuditSpec) -> LeakageAuditResult:
     )
     return LeakageAuditResult(
         passed=not failures,
-        checks=_CHECKS,
+        checks=REQUIRED_LEAKAGE_CHECKS,
         failures=failures,
         warnings=warnings,
         dataset_id=spec.dataset_id,
         code_commit=spec.code_commit,
         audited_at=audited_at.isoformat() if audited_at is not None else "Invalid",
+        audit_id=audit_id,
+        split_hash=split_hash,
     )

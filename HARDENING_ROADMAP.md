@@ -71,11 +71,11 @@ The safe archive foundation merged in PR #8. Qlib preprocessing and training wir
 
 ## Phase 5 — reproducible financial evaluation
 
-- [ ] Build expanding-window and rolling walk-forward benchmarks.
+- [x] Build deterministic expanding/rolling split plans with immutable fold identity; real benchmark execution remains open.
 - [ ] Compare against last-value, drift, momentum, ARIMA, and volatility baselines.
 - [ ] Report directional accuracy, calibration, rank correlation, and price error.
 - [ ] Model fees, spreads, slippage, turnover, and market impact in strategy tests.
-- [ ] Separate model selection periods from final untouched evaluation periods.
+- [x] Separate development roles from one fixed embargoed final-holdout boundary; physical access enforcement and the final run remain open.
 - [ ] Document whether released checkpoints predate any normalization fixes.
 
 ## Research data contract
@@ -93,7 +93,7 @@ The canonical contract is developed separately from the legacy Qlib demo so that
 - [x] Add future-perturbation normalization probes and contaminated regression fixtures.
 - [x] Check ordered disjoint split targets, embargo, sample label boundaries, and final-holdout isolation.
 - [x] Check feature availability, rolling windows, corporate-action effective time, and point-in-time membership.
-- [ ] Bind generated provenance and an audit result to every evaluation fold and immutable experiment record.
+- [x] Add identity-bound passed-audit attachment for each fold; real generated provenance and experiment registry enforcement remain open.
 
 ## Merge gates
 

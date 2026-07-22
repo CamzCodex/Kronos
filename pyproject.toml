@@ -59,11 +59,12 @@ Source = "https://github.com/CamzCodex/Kronos"
 Issues = "https://github.com/CamzCodex/Kronos/issues"
 
 [tool.setuptools.packages.find]
-include = ["model", "model.*", "finetune", "finetune.*", "kronos_data", "kronos_data.*"]
+include = ["model", "model.*", "finetune", "finetune.*", "kronos_data", "kronos_data.*", "kronos_eval", "kronos_eval.*"]
 
 [tool.setuptools.package-data]
 model = ["py.typed"]
 kronos_data = ["py.typed"]
+kronos_eval = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

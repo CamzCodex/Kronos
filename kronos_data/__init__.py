@@ -4,6 +4,7 @@ from .adjustments import AdjustmentPolicy
 from .calendars import CalendarSpec, calendar_for
 from .hashing import hash_configuration, hash_dataframe, sha256_file
 from .leakage import (
+    REQUIRED_LEAKAGE_CHECKS,
     AuditFinding,
     AuditSeverity,
     LeakageAuditResult,
@@ -13,6 +14,7 @@ from .leakage import (
     SplitRole,
     UniversePolicy,
     audit_leakage,
+    hash_split_boundaries,
 )
 from .manifests import DatasetManifest, build_dataset_manifest, write_manifest
 from .schema import CANONICAL_BAR_FIELDS, FEATURE_SCHEMA_VERSION
@@ -36,6 +38,7 @@ __all__ = [
     "LeakageAuditResult",
     "LeakageAuditSpec",
     "NormalizationProbe",
+    "REQUIRED_LEAKAGE_CHECKS",
     "SplitBoundary",
     "SplitRole",
     "UniversePolicy",
@@ -43,6 +46,7 @@ __all__ = [
     "ValidationIssue",
     "ValidationReport",
     "audit_leakage",
+    "hash_split_boundaries",
     "build_dataset_manifest",
     "calendar_for",
     "hash_configuration",

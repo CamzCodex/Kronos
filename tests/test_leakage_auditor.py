@@ -13,6 +13,7 @@ from kronos_data.leakage import (
     SplitRole,
     UniversePolicy,
     audit_leakage,
+    hash_split_boundaries,
 )
 
 
@@ -160,6 +161,49 @@ def test_clean_causal_fixture_passes_every_audit():
     assert result.passed, result.to_dict()
     assert not result.failures
     assert result.dataset_id == "kds-fixture"
+    assert result.audit_id.startswith("kla-")
+    assert result.split_hash == hash_split_boundaries(_clean_spec().splits)
+
+
+def test_audit_identity_is_deterministic_and_binds_provenance():
+    spec = _clean_spec()
+    repeated = audit_leakage(spec)
+    changed_windows = spec.sample_windows.copy()
+    changed_windows.loc[0, "lookback_start"] -= pd.Timedelta(days=1)
+    changed = audit_leakage(replace(spec, sample_windows=changed_windows))
+
+    assert audit_leakage(spec).audit_id == repeated.audit_id
+    assert changed.audit_id != repeated.audit_id
+
+
+def test_calibration_split_is_optional_only_when_explicitly_disabled():
+    spec = _clean_spec()
+    splits = tuple(
+        boundary for boundary in spec.splits if boundary.role is not SplitRole.CALIBRATION
+    )
+    windows = spec.sample_windows.loc[~spec.sample_windows["split"].eq("calibration")]
+    sample_ids = set(windows["sample_id"])
+    features = spec.feature_provenance.loc[
+        spec.feature_provenance["sample_id"].isin(sample_ids)
+    ]
+    memberships = spec.universe_membership.loc[
+        spec.universe_membership["prediction_timestamp"].isin(
+            windows["prediction_timestamp"]
+        )
+    ]
+
+    result = audit_leakage(
+        replace(
+            spec,
+            splits=splits,
+            sample_windows=windows,
+            feature_provenance=features,
+            universe_membership=memberships,
+            require_calibration=False,
+        )
+    )
+
+    assert result.passed, result.to_dict()
 
 
 def test_future_target_perturbation_catches_leaky_normalization():
