@@ -33,13 +33,13 @@ Merged in PR #5.
 - [x] Separate core, web UI, fine-tuning, test, and development dependency groups.
 - [x] Verify imports from an installed wheel outside the repository checkout.
 - [x] Define focused lint configuration without mixing mass formatting into logic PRs.
-- [ ] Replace working-directory-dependent imports with package-relative imports.
+- [ ] Replace remaining working-directory-dependent imports with package-relative imports.
 - [ ] Add a dependency lock strategy for CI and documented research runs.
 - [ ] Run lint and static checks as required CI gates.
 
 ## Phase 3 — inference API and financial invariants
 
-Sampling hardening is tracked in PR #7.
+Sampling hardening merged in PR #7.
 
 - [x] Make top-k/top-p filtering side-effect-free.
 - [x] Validate logits and generation controls before sampling.
@@ -54,7 +54,16 @@ Sampling hardening is tracked in PR #7.
 
 ## Phase 4 — data safety and training integrity
 
-- [ ] Replace or tightly constrain untrusted pickle deserialization.
+The safe archive foundation merged in PR #8. Qlib preprocessing and training wiring merged in PR #9. Inference and backtest wiring is tracked in PR #10.
+
+- [x] Replace implicit pickle exchange with versioned, checksummed data-only archives.
+- [x] Refuse legacy pickle before deserialisation unless compatibility is explicitly enabled.
+- [x] Provide a documented migration command for verified local legacy files.
+- [x] Reject archive traversal, duplicate, encrypted, symbolic-link, oversized, malformed, and unreferenced members.
+- [x] Wire Qlib train, validation, and test datasets to canonical `.kronos.zip` archives.
+- [x] Persist generated prediction signals without pickle.
+- [x] Add cross-version resolver, migration, tampering, path-safety, package, and dataset integration tests.
+- [ ] Stream archive writes to reduce peak memory for large multi-symbol datasets.
 - [ ] Audit every normalization and split path for target leakage.
 - [ ] Add tests proving train, validation, test, and backtest boundaries are causal.
 - [ ] Record dataset hashes, feature definitions, and preprocessing configuration.
