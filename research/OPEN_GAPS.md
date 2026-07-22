@@ -36,13 +36,13 @@ Status date: 2026-07-22
 
 - gap_id: `GAP-003`
 - title: Reusable causal audit absent
-- description: Selected normalization has a regression test, but split, label overlap, feature availability, final holdout, universe, and corporate-action causality are not audited.
+- description: A reusable auditor now tests normalization perturbation, split/label boundaries, feature availability, adjustment effective time, point-in-time membership, selection isolation, and final-holdout use. No real dataset or evaluation fold has yet generated and passed the required provenance.
 - severity: Critical
 - impact: False positive research results could pass existing tests.
-- evidence: Test and source inventory at `c94cf3be1af5f57849e67defeb25c82ddd93815d`.
+- evidence: `kronos_data/leakage.py`, contaminated fixtures in `tests/test_leakage_auditor.py`, and the Phase 3 adversarial review.
 - owner: Unassigned
-- status: Open — promotion blocker
-- required work: `data/leakage-auditor` with deliberately contaminated fixtures
+- status: Partially resolved — real audits remain a promotion blocker
+- required work: Generate source provenance; attach one audit per walk-forward fold and final holdout; block experiment registration on failure.
 - blocking decision: Evaluation validity
 - related PR: None
 - related experiment: None

@@ -1,7 +1,7 @@
 # Kronos research status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `577af114c2fdae7fde5dfc4f89475ebcda06e074`
+Evidence baseline: `master` at `bf384abe19de54998b62f148d515408f6c3bb136`
 
 ## Decision
 
@@ -30,6 +30,7 @@ These are software and checkpoint-reproducibility results. They are not independ
 - canonical bar field semantics and multi-issue validation reports;
 - deterministic dataset content/configuration identity and immutable manifest persistence;
 - reference data-card and scalable-storage policy templates.
+- reusable split, normalization, feature, adjustment, universe, selection, and holdout causality audits with deliberately contaminated fixtures.
 
 Engineering completion must not be reported as financial validation.
 

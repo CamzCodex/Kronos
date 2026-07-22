@@ -87,6 +87,14 @@ The canonical contract is developed separately from the legacy Qlib demo so that
 - [ ] Select and document an authoritative exchange-calendar and universe-membership source for the first benchmark.
 - [ ] Wire the selected ingestion adapter to Parquet/Arrow research storage and bounded `.kronos.zip` evidence artifacts.
 
+## Leakage and causality audit
+
+- [x] Add a structured audit result whose failures invalidate an experiment.
+- [x] Add future-perturbation normalization probes and contaminated regression fixtures.
+- [x] Check ordered disjoint split targets, embargo, sample label boundaries, and final-holdout isolation.
+- [x] Check feature availability, rolling windows, corporate-action effective time, and point-in-time membership.
+- [ ] Bind generated provenance and an audit result to every evaluation fold and immutable experiment record.
+
 ## Merge gates
 
 A phase is ready for `master` only when:
