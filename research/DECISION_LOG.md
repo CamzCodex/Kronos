@@ -116,3 +116,29 @@
 - reversal trigger: A versioned baseline-suite contract with pre-registered controls and tests that strengthens fairness without using evaluation or final-holdout outcomes.
 - related commit: Introduced by `evaluation/baseline-suite`
 - related PR: This phase's pull request
+
+## DEC-010 — Final-holdout scores never enter development aggregation
+
+- decision_id: `DEC-010`
+- date: 2026-07-22
+- decision: Require a complete paired model/fold/metric grid and one predeclared reference baseline; remove the named final-holdout fold before calculating development means, fold wins, or bootstrap intervals; and report final values separately without automatically pooling or selecting a model.
+- alternatives: Pool final and development folds; choose the best baseline after observing all scores; report only an aggregate mean; omit failed model/fold cells.
+- evidence: `kronos_eval/aggregation.py`, final-isolation regression tests, the evaluation protocol, and the Phase 5C adversarial review.
+- reasoning: Final pooling and ex-post comparator choice convert confirmation data into model selection. Complete paired grids prevent failures or unfavorable comparators from disappearing.
+- risks: Fold resampling does not remove market dependence, a predeclared baseline may not be the strongest comparator, and multiple metric/model comparisons can still inflate confidence.
+- reversal trigger: A versioned, pre-registered inference protocol that demonstrably strengthens final isolation and dependence handling without using final outcomes for selection.
+- related commit: Introduced by `evaluation/metrics-and-costs`
+- related PR: This phase's pull request
+
+## DEC-011 — Over-limit paper trades invalidate cost evaluation
+
+- decision_id: `DEC-011`
+- date: 2026-07-22
+- decision: Apply commission, half spread, slippage, and participation-dependent impact to every absolute target-weight change; require complete-universe zero targets; and fail the evaluation when any simulated trade exceeds the declared participation ceiling rather than silently clipping, filling, or omitting it.
+- alternatives: Ignore liquidity; assume full fills at fixed costs; drop rejected trades; carry omitted positions without explicit exits.
+- evidence: `kronos_eval/costs.py`, cost/causality/liquidity regression tests, the evaluation protocol, and the Phase 5C adversarial review.
+- reasoning: Silent fill assumptions and missing exits systematically understate turnover and costs. A failed scenario is more honest than a portfolio return that could not satisfy its own liquidity assumptions.
+- risks: Dollar volume and impact parameters can still be wrong, a hard ceiling does not model partial fills or delay, and paper costs are not execution evidence.
+- reversal trigger: A versioned execution simulator with explicit rejected/partial/delayed fills and evidence that it is at least as conservative.
+- related commit: Introduced by `evaluation/metrics-and-costs`
+- related PR: This phase's pull request

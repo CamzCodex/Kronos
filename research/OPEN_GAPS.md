@@ -66,15 +66,15 @@ Status date: 2026-07-22
 
 - gap_id: `GAP-005`
 - title: Split and baseline protocols exist but comparable out-of-sample execution is absent
-- description: PR #16 implements deterministic expanding/rolling plans, optional calibration, cross-fold role isolation, purge/embargo records, a fixed final holdout, immutable artifacts, and identity-bound passed-audit attachment. The active baseline branch implements all eleven required frozen, identical-information forecast comparators. Common forecast execution, metrics, applied costs, robustness, and physical final-holdout isolation are not implemented.
+- description: PRs #16 and #17 implement deterministic split/audit binding and all eleven required frozen comparators. The active phase adds normalized forecast metrics, causal paper-return cost ledgers, cost sensitivity, paired fold bootstrap summaries, and separation of final-holdout scores. Audit-gated forecast execution, training-only scale/regime provenance, immutable run artifacts, and physical final-data access enforcement remain absent.
 - severity: Critical
 - impact: The central mission question cannot be answered.
-- evidence: `kronos_eval/walk_forward.py`, `kronos_eval/baselines.py`, their regression tests, protocol documents, and Phase 5A/5B adversarial reviews.
+- evidence: `kronos_eval/walk_forward.py`, `baselines.py`, `metrics.py`, `costs.py`, `aggregation.py`, their regression tests, protocol documents, and Phase 5A/5B/5C adversarial reviews.
 - owner: Unassigned
 - status: Partially resolved — evaluation runner remains a promotion blocker
-- required work: Common metric/cost/robustness runner, feature-matched conventional comparators, verified real fold audits, final-holdout enforcement, evaluation CI smoke
+- required work: Audit-gated runner and immutable results, feature-matched comparators, training-only scale/regime provenance, factor exposure source, verified real fold audits, physical final-holdout enforcement, evaluation CI smoke
 - blocking decision: Model usefulness and fine-tuning gate
-- related PR: `#16` and this phase's pull request
+- related PR: `#16`, `#17`, and this phase's pull request
 - related experiment: None
 
 ## GAP-006 — No zero-shot reference benchmark

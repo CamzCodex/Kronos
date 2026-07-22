@@ -75,6 +75,9 @@ jobs:
           assert callable(kronos_eval.attach_leakage_audit)
           assert callable(kronos_eval.run_baseline_suite)
           assert len(kronos_eval.MANDATORY_BASELINES) == 11
+          assert callable(kronos_eval.score_forecasts)
+          assert callable(kronos_eval.evaluate_paper_returns)
+          assert callable(kronos_eval.aggregate_fold_scores)
           assert callable(load_frame_mapping)
           assert callable(load_named_frame_mapping)
           assert callable(load_test_data)
@@ -123,6 +126,9 @@ jobs:
           assert model.ForecastResult is not None
           assert callable(kronos_eval.build_walk_forward_plan)
           assert callable(kronos_eval.run_baseline_suite)
+          assert callable(kronos_eval.score_forecasts)
+          assert callable(kronos_eval.evaluate_paper_returns)
+          assert callable(kronos_eval.aggregate_fold_scores)
           assert data_io.FORMAT_VERSION == 1
           assert callable(data_io.save_frame_mapping)
           assert data_io.save_frame_mapping is not archive_writer.save_frame_mapping

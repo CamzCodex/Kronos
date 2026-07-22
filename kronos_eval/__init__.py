@@ -1,5 +1,13 @@
 """Leakage-gated evaluation protocols for Kronos research."""
 
+from .aggregation import (
+    AGGREGATION_VERSION,
+    REQUIRED_FOLD_SCORE_COLUMNS,
+    FoldAggregationError,
+    FoldAggregationRequest,
+    FoldAggregationResult,
+    aggregate_fold_scores,
+)
 from .baselines import (
     BASELINE_FEATURE_COLUMNS,
     BASELINE_SUITE_VERSION,
@@ -10,6 +18,24 @@ from .baselines import (
     BaselineResult,
     required_history_size,
     run_baseline_suite,
+)
+from .costs import (
+    COST_MODEL_VERSION,
+    REQUIRED_PAPER_RETURN_COLUMNS,
+    CostAssumptions,
+    CostEvaluationRequest,
+    CostEvaluationResult,
+    CostModelError,
+    evaluate_cost_scenarios,
+    evaluate_paper_returns,
+)
+from .metrics import (
+    METRIC_SUITE_VERSION,
+    REQUIRED_EVALUATION_COLUMNS,
+    ForecastMetricError,
+    ForecastMetricRequest,
+    ForecastScorecard,
+    score_forecasts,
 )
 from .walk_forward import (
     AuditedWalkForwardFold,
@@ -26,24 +52,44 @@ from .walk_forward import (
 )
 
 __all__ = [
+    "AGGREGATION_VERSION",
     "BASELINE_FEATURE_COLUMNS",
     "BASELINE_SUITE_VERSION",
+    "COST_MODEL_VERSION",
     "MANDATORY_BASELINES",
+    "METRIC_SUITE_VERSION",
+    "REQUIRED_EVALUATION_COLUMNS",
+    "REQUIRED_FOLD_SCORE_COLUMNS",
+    "REQUIRED_PAPER_RETURN_COLUMNS",
     "AuditedWalkForwardFold",
     "BaselineFitError",
     "BaselineRequest",
     "BaselineRequestError",
     "BaselineResult",
+    "CostAssumptions",
+    "CostEvaluationRequest",
+    "CostEvaluationResult",
+    "CostModelError",
     "EvaluationContext",
     "ExcludedWindow",
     "FoldBoundary",
+    "FoldAggregationError",
+    "FoldAggregationRequest",
+    "FoldAggregationResult",
+    "ForecastMetricError",
+    "ForecastMetricRequest",
+    "ForecastScorecard",
     "WalkForwardConfig",
     "WalkForwardFold",
     "WalkForwardMode",
     "WalkForwardPlan",
     "attach_leakage_audit",
+    "aggregate_fold_scores",
     "build_walk_forward_plan",
+    "evaluate_cost_scenarios",
+    "evaluate_paper_returns",
     "required_history_size",
     "run_baseline_suite",
+    "score_forecasts",
     "write_walk_forward_plan",
 ]
