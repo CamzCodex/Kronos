@@ -17,17 +17,17 @@ Status date: 2026-07-22
 - related PR: None
 - related experiment: None
 
-## GAP-002 — No canonical market-data contract
+## GAP-002 — No approved canonical benchmark dataset
 
 - gap_id: `GAP-002`
 - title: Canonical bars, validation reports, and deterministic manifests absent
-- description: No package binds field semantics, calendars, frequency, timezone, adjustment, universe, hashes, splits, and configuration into a dataset identity.
-- severity: Critical
-- impact: Experiments cannot be independently reconstructed or compared safely.
-- evidence: No `kronos_data` equivalent or dataset manifest implementation at reconciliation.
+- description: The reusable `kronos_data` contract now binds canonical fields, structured validation, content/configuration hashes, splits, adjustment declaration, code commit, and immutable manifest identity. No real provider adapter, authoritative calendar, point-in-time universe, or approved dataset manifest exists yet.
+- severity: High
+- impact: A selected source still cannot be used for evidence-grade experiments until it is ingested and bound to the contract.
+- evidence: `kronos_data/`, `data/cards/reference_daily/DATA_CARD.md`, and the Phase 2 adversarial review.
 - owner: Unassigned
-- status: Open — promotion blocker
-- required work: `data/canonical-market-contract`
+- status: Partially resolved — real dataset remains a promotion blocker
+- required work: Select source/licence; implement adapter; supply authoritative calendar and universe history; write and register the first immutable manifest.
 - blocking decision: Any evidence-grade experiment
 - related PR: None
 - related experiment: None
