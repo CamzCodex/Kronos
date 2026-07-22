@@ -48,4 +48,5 @@ jobs:
             tests/test_sampling.py \
             tests/test_finetune_csv_normalization.py \
             tests/test_data_io.py \
-            tests/test_archive_paths.py
+            tests/test_archive_paths.py \
+            tests/test_backtest_io.py

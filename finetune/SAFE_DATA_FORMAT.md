@@ -44,7 +44,7 @@ This creates or loads `train_data.kronos.zip`.
 
 ## Prepared Qlib datasets
 
-`finetune/qlib_data_preprocess.py` now writes:
+`finetune/qlib_data_preprocess.py` writes:
 
 ```text
 train_data.kronos.zip
@@ -52,7 +52,13 @@ val_data.kronos.zip
 test_data.kronos.zip
 ```
 
-`finetune/dataset.py` loads the training and validation archives through the safe resolver. When both safe and legacy files are present, the safe archive wins.
+`finetune/dataset.py` loads the training and validation archives through the safe resolver. `finetune/qlib_test.py` loads `test_data.kronos.zip` through the same resolver and stores generated signals as:
+
+```text
+predictions.kronos.zip
+```
+
+When safe and legacy files coexist, the safe archive wins. Generated prediction signals are backtested directly in memory after the safe archive is written; the script no longer performs a redundant deserialize step.
 
 ## Migrating a trusted legacy pickle
 
@@ -77,11 +83,17 @@ The flag is an acknowledgement, not a sandbox. It does not make a malicious pick
 self.allow_unsafe_pickle = False
 ```
 
-The default is deliberately `False`. Setting it to `True` permits the training dataset loader to open a legacy local `.pkl` when no safe archive exists. Use that mode only for a verified file and migrate it promptly; do not use it for downloaded or shared pickles.
+The default is deliberately `False`. Setting it to `True` permits prepared-data loaders to open a legacy local `.pkl` when no safe archive exists. `finetune/qlib_test.py` also provides the explicit command-line flag:
+
+```bash
+python finetune/qlib_test.py --allow-unsafe-pickle
+```
+
+Use either compatibility mechanism only for a verified local file and migrate it promptly; do not use it for downloaded or shared pickles.
 
 When compatibility remains disabled and a legacy file is found, the loader raises an error containing the exact migration command rather than silently deserializing it.
 
-## Current rollout status
+## Rollout status
 
 Implemented:
 
@@ -90,12 +102,12 @@ Implemented:
 - integrity and archive-structure checks;
 - packaged APIs and cross-version tests;
 - safe Qlib preprocessing output;
-- safe training and validation dataset loading;
-- default refusal of legacy pickle.
+- safe training and validation loading;
+- safe test-data loading;
+- safe prediction-signal persistence;
+- default refusal of legacy pickle across preprocessing, training, inference, and backtesting paths.
 
-Still pending:
-
-- replacing direct pickle usage in `finetune/qlib_test.py` for test data and saved prediction signals.
+The only intentional pickle deserialization remaining in this subsystem is the explicitly gated legacy migration/compatibility function in `finetune/data_io.py`.
 
 ## Format stability
 
