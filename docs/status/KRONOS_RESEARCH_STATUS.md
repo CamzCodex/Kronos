@@ -1,7 +1,7 @@
 # Kronos research status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `ea66c2ae6cb9231f539407bd0bbdfcd532fdb876`
+Evidence baseline: `master` at `60914d567cc5407ab7edfdb38aab9abb75adbdaa` plus the Web UI security phase
 
 ## Decision
 
@@ -38,6 +38,7 @@ These are software and checkpoint-reproducibility results. They are not independ
 - a complete-suite, passed-audit-only development runner with truth matching, test/final boundary refusal, optional downstream cost binding, and immutable JSON results merged in PR #19. Its tests use synthetic audits and forecasts only.
 - a content-addressed local experiment/model registry with exact-byte reconstruction, immutable records and alias history, and mechanically gated aliases merged in PR #20. Its tests use synthetic files and metadata only.
 - a fail-closed reference-source evidence gate merged in PR #21. Its tests validate refusal/identity mechanics only; no real source passes and no source artifact is invented.
+- required quality/security CI merged in PR #23, plus a local-only Web UI boundary with strict market-input refusal and 37 route-level regressions. These are security and integrity mechanics; interactive UI predictions are not benchmark evidence.
 
 Engineering completion must not be reported as financial validation.
 

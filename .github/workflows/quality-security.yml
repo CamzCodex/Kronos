@@ -38,7 +38,9 @@ jobs:
             kronos_eval \
             model/forecast.py \
             finetune/archive_writer.py \
-            finetune/data_io.py
+            finetune/data_io.py \
+            webui/security.py \
+            webui/run.py
 
       - name: Type-check maintained contracts
         run: python -m mypy
@@ -88,7 +90,7 @@ jobs:
       - name: Install package and tests
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[test]"
+          python -m pip install -e ".[test,webui]"
 
       - name: Run archive security regressions
         run: |
@@ -115,6 +117,9 @@ jobs:
             tests/test_fold_aggregation.py \
             tests/test_evaluation_runner.py \
             tests/test_experiment_registry.py
+
+      - name: Run Web UI security regressions
+        run: python -m pytest -q tests/webui/test_security.py
 
   secret-scan:
     name: Repository secret scan

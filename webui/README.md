@@ -4,7 +4,7 @@ Web user interface for Kronos financial prediction model, providing intuitive gr
 
 ## ✨ Features
 
-- **Multi-format data support**: Supports CSV, Feather and other financial data formats
+- **Validated CSV input**: Loads bounded local CSV files through a strict market-data contract
 - **Smart time window**: Fixed 400+120 data point time window slider selection
 - **Real model prediction**: Integrated real Kronos model, supports multiple model sizes
 - **Prediction quality control**: Adjustable temperature, nucleus sampling, sample count and other parameters
@@ -14,10 +14,15 @@ Web user interface for Kronos financial prediction model, providing intuitive gr
 
 ## 🚀 Quick Start
 
-### Method 1: Start with Python script
+Install the declared dependencies from the repository root:
+
 ```bash
-cd webui
-python run.py
+python -m pip install -e ".[webui]"
+```
+
+### Method 1: Start as a module
+```bash
+python -m webui.run
 ```
 
 ### Method 2: Start with Shell script
@@ -35,9 +40,31 @@ python app.py
 
 After successful startup, visit http://localhost:7070
 
+## 🔒 Security Boundary
+
+- The bundled server binds to `127.0.0.1` only, with debug mode and the reloader disabled.
+- API writes reject cross-origin requests and JSON bodies larger than 64 KiB.
+- Data selection is restricted to regular `.csv` files inside the repository's
+  `data/` directory; absolute paths, traversal, and escaping symlinks are refused.
+- Forecast parameters, devices, input file size, and loaded row counts are bounded.
+- Input data must include exactly one UTC-normalizable timestamp column, strict chronological
+  ordering, finite positive prices, valid OHLC relationships, and non-negative activity fields.
+  Invalid rows are refused rather than repaired or silently dropped.
+- Runtime launchers never install packages or modify the environment.
+- Internal exceptions are logged locally and replaced with stable client errors.
+- Third-party browser scripts use exact version URLs and Subresource Integrity hashes.
+
+This UI has no authentication, TLS termination, user isolation, or production WSGI server. Do not
+bind it to a non-loopback interface, publish it through a tunnel, or expose it through a reverse
+proxy. A separately reviewed access-control and deployment design is required for remote use.
+
+The UI is a research demonstration. Its charts and saved predictions are not leakage-audited,
+decision-grade benchmark evidence and must not be used to unlock fine-tuning, paper trading, or
+live trading.
+
 ## 📋 Usage Steps
 
-1. **Load data**: Select financial data file from data directory
+1. **Load data**: Place and select a supported financial data file from the repository `data/` directory
 2. **Load model**: Select Kronos model and computing device
 3. **Set parameters**: Adjust prediction quality parameters
 4. **Select time window**: Use slider to select 400+120 data point time range
@@ -64,6 +91,7 @@ After successful startup, visit http://localhost:7070
 ## 📊 Supported Data Formats
 
 ### Required Columns
+- Exactly one of `timestamps`, `timestamp`, or `date`: chronological observation time
 - `open`: Opening price
 - `high`: Highest price
 - `low`: Lowest price
@@ -72,7 +100,6 @@ After successful startup, visit http://localhost:7070
 ### Optional Columns
 - `volume`: Trading volume
 - `amount`: Trading amount (not used for prediction)
-- `timestamps`/`timestamp`/`date`: Timestamp
 
 ## 🤖 Model Support
 
@@ -113,7 +140,7 @@ The system automatically provides comparison analysis between prediction results
 ### Common Issues
 1. **Port occupied**: Modify port number in app.py
 2. **Missing dependencies**: Run `pip install -r requirements.txt`
-3. **Model loading failed**: Check network connection and model ID
+3. **Model loading failed**: Check the model dependency, network access, and model ID
 4. **Data format error**: Ensure data column names and format are correct
 
 ### Log Viewing
