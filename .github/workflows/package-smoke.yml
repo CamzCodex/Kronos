@@ -43,7 +43,9 @@ jobs:
         run: |
           python - <<'PY'
           from importlib.metadata import version
+          import finetune
           import model
+          from finetune import load_frame_mapping, save_frame_mapping
           from model import Kronos, KronosPredictor, KronosTokenizer
 
           assert model.__version__ == "0.1.0.dev0"
@@ -51,6 +53,9 @@ jobs:
           assert Kronos is not None
           assert KronosPredictor is not None
           assert KronosTokenizer is not None
+          assert finetune is not None
+          assert callable(load_frame_mapping)
+          assert callable(save_frame_mapping)
           PY
 
       - name: Build source and wheel distributions
@@ -69,12 +74,17 @@ jobs:
           from importlib.metadata import version
           from pathlib import Path
 
+          import finetune
           import model
+          from finetune import data_io
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
-          imported_from = Path(model.__file__).resolve()
+          model_imported_from = Path(model.__file__).resolve()
+          finetune_imported_from = Path(finetune.__file__).resolve()
 
-          assert not imported_from.is_relative_to(workspace)
+          assert not model_imported_from.is_relative_to(workspace)
+          assert not finetune_imported_from.is_relative_to(workspace)
           assert version("kronos-timeseries") == model.__version__
           assert model.get_model_class("kronos") is model.Kronos
+          assert data_io.FORMAT_VERSION == 1
           PY

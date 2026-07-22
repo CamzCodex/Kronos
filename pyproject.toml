@@ -59,7 +59,7 @@ Source = "https://github.com/CamzCodex/Kronos"
 Issues = "https://github.com/CamzCodex/Kronos/issues"
 
 [tool.setuptools.packages.find]
-include = ["model", "model.*"]
+include = ["model", "model.*", "finetune", "finetune.*"]
 
 [tool.setuptools.package-data]
 model = ["py.typed"]
@@ -89,4 +89,4 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["model"]
+known-first-party = ["finetune", "model"]
