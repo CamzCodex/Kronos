@@ -21,15 +21,15 @@ Status date: 2026-07-22
 
 - gap_id: `GAP-002`
 - title: No source has passed the canonical benchmark evidence gate
-- description: The reusable `kronos_data` contract binds canonical fields, validation, hashes, splits, adjustment declaration, code commit, and immutable manifest identity. The active source gate additionally requires confirmed rights/access, retained hashed bytes, authoritative sessions, causal adjustments, point-in-time membership, delistings, stable identifiers/currency, revision policy, and primary evidence. Qlib/Yahoo remains incomplete and reviewed alternatives require unapproved paid access.
+- description: The reusable `kronos_data` contract binds canonical fields, validation, hashes, splits, adjustment declaration, code commit, and immutable manifest identity. The source gate additionally requires confirmed rights/access, retained hashed bytes, authoritative sessions, causal adjustments, point-in-time membership, delistings, stable identifiers/currency, revision policy, and primary evidence. Norgate US Stocks Platinum is the preferred conditional technical candidate, but its standard EULA requires deletion of Data and Derived Data after lapse, restricts use, permits silent corrections, and does not establish historical availability timestamps. Qlib/Yahoo and other reviewed alternatives remain incomplete.
 - severity: Critical
 - impact: No selected source can be ingested for a decision-grade experiment, so the benchmark cannot start honestly.
-- evidence: `kronos_data/source_gate.py`, `docs/data/REFERENCE_SOURCE_ASSESSMENT.md`, primary sources linked there, `data/cards/reference_daily/DATA_CARD.md`, and the Phase 2/source-gate adversarial reviews.
+- evidence: `kronos_data/source_gate.py` v1.1, its paid-entitlement hash regression, `docs/data/REFERENCE_SOURCE_ASSESSMENT.md`, `docs/data/REFERENCE_SOURCE_ACQUISITION_DECISION.md`, linked provider terms/content/pricing sources, `data/cards/reference_daily/DATA_CARD.md`, and the source/acquisition adversarial reviews.
 - owner: Unassigned
-- status: Partially resolved — requirements and candidate refusal are explicit; data acquisition remains a promotion blocker
-- required work: Supply an already licensed evidence package or separately authorize paid-source evaluation; then implement the source adapter, pass this gate, and write/register the first real manifest.
+- status: Partially resolved — conditional technical candidate selected; licence, acquisition, and real evidence remain promotion blockers
+- required work: Obtain a signed Norgate research/retention amendment satisfying the acquisition checklist (or an equivalent provider contract), acquire and hash a trial export, prove availability timing, pass the source gate, then implement the adapter and first real manifest.
 - blocking decision: Any evidence-grade experiment
-- related PR: `#21`
+- related PR: `#21` and the data-acquisition closeout PR
 - related experiment: None
 
 ## GAP-003 — No leakage and causality auditor

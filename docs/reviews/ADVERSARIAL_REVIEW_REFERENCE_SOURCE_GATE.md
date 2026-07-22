@@ -12,8 +12,8 @@ Severity: high. A boolean cannot encode every territorial, user-class, storage, 
 publication, or derived-data restriction.
 
 Control: the gate requires terms and entitlement text references, but legal/contract review
-remains outside the software. Unknown rights fail. Paid access without separate authorization
-fails.
+remains outside the software. Unknown rights fail. Paid access without an accepted contract and
+payment authority fails.
 
 ### A raw hash can pin bad data
 
@@ -57,8 +57,9 @@ Reference count alone never creates a pass.
 ## Regression evidence
 
 Synthetic tests cover each required evidence class, unknown rights, unavailable sources,
-unapproved paid access, raw-hash retention, explicit history thresholds, deterministic identity,
-invalid timestamps/hashes, duplicate evidence, and immutable result writes.
+unapproved or entitlement-unbound paid access, raw/contract-hash retention, explicit history
+thresholds, deterministic identity, invalid timestamps/hashes, duplicate evidence, and immutable
+result writes.
 
 No real provider passes because no complete evidence package or raw snapshot was supplied.
 
@@ -68,8 +69,8 @@ No real provider passes because no complete evidence package or raw snapshot was
 |---|---|---|---|
 | RSG-001 | Critical | No reviewed candidate has complete licensing, snapshot, calendar, adjustment, universe, and delisting evidence. | Open; blocks benchmark and model promotion. |
 | RSG-002 | High | Qlib/Yahoo is reproducible only after exact bytes are retained; its own documentation warns about data and adjustment quality and historical-version instability. | Open; engineering smoke only unless resolved. |
-| RSG-003 | High | Plausible alternatives reviewed here require paid access, which is outside current authorization. | Escalation required before acquisition. |
-| RSG-004 | Medium | The gate trusts human-entered booleans and references. | The future source adapter must derive/hash evidence automatically where possible. |
+| RSG-003 | High | The preferred technical candidate requires paid access, but its standard retention and use terms conflict with durable evidence. | A signed custom agreement and trial export are required before purchase/approval. |
+| RSG-004 | Medium | The gate still trusts human-entered booleans and public references, although paid entitlements are now content-bound by SHA-256. | The future source adapter must derive/hash remaining evidence automatically and resolve the private entitlement digest under governed access. |
 
 ## Decision
 
