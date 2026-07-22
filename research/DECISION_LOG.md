@@ -64,3 +64,16 @@
 - reversal trigger: A versioned manifest migration supported by compatibility tests and evidence that a different identity boundary is safer.
 - related commit: Introduced by `data/canonical-market-contract`
 - related PR: This phase's pull request
+
+## DEC-006 — Failed leakage audits invalidate experiments
+
+- decision_id: `DEC-006`
+- date: 2026-07-22
+- decision: Any error-severity leakage or causality finding sets `passed=False` and makes the associated evaluation ineligible for experiment approval, report promotion, fine-tuning decisions, or paper-portfolio use.
+- alternatives: Treat findings as non-blocking warnings; permit manual result promotion without a persisted audit.
+- evidence: `kronos_data/leakage.py` and deliberately contaminated fixtures.
+- reasoning: Leakage can create apparently strong but financially meaningless performance and cannot be averaged away by later metrics.
+- risks: Incomplete provenance will block runs until adapters and evaluators emit the required records.
+- reversal trigger: None for error-severity causal failures; only correction and a new audit may reverse the result.
+- related commit: Introduced by `data/leakage-auditor`
+- related PR: This phase's pull request
