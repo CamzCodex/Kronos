@@ -18,16 +18,23 @@ SAFE_ARCHIVE_SUFFIX = ".kronos.zip"
 LEGACY_PICKLE_SUFFIX = ".pkl"
 
 
+def _validate_dataset_name(name: str) -> str:
+    if not isinstance(name, str) or not name:
+        raise ValueError("dataset name must be a non-empty string")
+    if name in {".", ".."} or "/" in name or "\\" in name:
+        raise ValueError("dataset name must not contain path separators")
+    if Path(name).name != name:
+        raise ValueError("dataset name must not contain path separators")
+    return name
+
+
 def safe_archive_path(
     directory: str | os.PathLike[str],
     name: str,
 ) -> Path:
     """Return the canonical safe archive path for a named dataset."""
 
-    if not isinstance(name, str) or not name:
-        raise ValueError("dataset name must be a non-empty string")
-    if Path(name).name != name:
-        raise ValueError("dataset name must not contain path separators")
+    name = _validate_dataset_name(name)
     return Path(directory) / f"{name}{SAFE_ARCHIVE_SUFFIX}"
 
 
@@ -37,8 +44,7 @@ def legacy_pickle_path(
 ) -> Path:
     """Return the historical pickle path for a named dataset."""
 
-    # Reuse the canonical name validation.
-    safe_archive_path(directory, name)
+    name = _validate_dataset_name(name)
     return Path(directory) / f"{name}{LEGACY_PICKLE_SUFFIX}"
 
 
