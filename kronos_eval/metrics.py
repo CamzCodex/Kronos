@@ -5,9 +5,10 @@ from __future__ import annotations
 import hashlib
 import math
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from numbers import Integral, Real
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -548,7 +549,11 @@ def _recall(actual: np.ndarray, predicted: np.ndarray) -> float | None:
 
 def _aware_utc_index(values: object, name: str) -> pd.DatetimeIndex:
     converted = []
-    for value in values:
+    try:
+        iterator = iter(cast(Iterable[object], values))
+    except TypeError as exc:
+        raise ForecastMetricError(f"{name} must be an iterable of timestamps") from exc
+    for value in iterator:
         try:
             timestamp = pd.Timestamp(value)
         except (TypeError, ValueError) as exc:

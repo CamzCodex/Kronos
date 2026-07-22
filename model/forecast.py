@@ -13,7 +13,7 @@ import math
 import re
 from dataclasses import dataclass, field
 from numbers import Integral, Real
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -203,6 +203,15 @@ class ForecastResult:
     summary_source: str
 
 
+class _ForecastSummaries(TypedDict):
+    mean_path: pd.DataFrame
+    median_path: pd.DataFrame
+    quantiles: dict[float, pd.DataFrame]
+    return_samples: np.ndarray
+    probability_positive_return: pd.Series
+    lower_tail_return: pd.Series
+
+
 def forecast_with_predictor(
     predictor: KronosPredictor,
     request: ForecastRequest,
@@ -252,7 +261,7 @@ def forecast_with_predictor(
         raw_paths,
         projection_policy=request.projection_policy,
     )
-    output_valid_mask = np.asarray(
+    output_valid_mask: np.ndarray = np.asarray(
         [path_report.output_valid for path_report in path_reports],
         dtype=bool,
     )
@@ -479,6 +488,8 @@ def _resolve_generator(
         state = request.generator.get_state().cpu().numpy().tobytes()
         return request.generator, int(request.generator.initial_seed()), state
 
+    if request.seed is None:
+        raise ForecastRequestError("stochastic generation requires an explicit seed")
     try:
         generator = torch.Generator(device=target_device)
     except (RuntimeError, TypeError) as exc:
@@ -675,7 +686,7 @@ def _summarize_paths(
     future_index: pd.DatetimeIndex,
     quantiles: tuple[float, ...],
     lower_tail_quantile: float,
-) -> dict[str, object]:
+) -> _ForecastSummaries:
     horizon = len(future_index)
     feature_count = len(FEATURE_COLUMNS)
     if paths.shape[0]:

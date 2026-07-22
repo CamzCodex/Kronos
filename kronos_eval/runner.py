@@ -7,9 +7,10 @@ import json
 import os
 import re
 import tempfile
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -527,7 +528,11 @@ def _json_safe(value: Any) -> Any:
 
 def _aware_index(values: object, name: str) -> pd.DatetimeIndex:
     converted = []
-    for value in values:
+    try:
+        iterator = iter(cast(Iterable[object], values))
+    except TypeError as exc:
+        raise EvaluationRunnerError(f"{name} must be an iterable of timestamps") from exc
+    for value in iterator:
         timestamp = _aware_timestamp(value, name)
         converted.append(timestamp)
     return pd.DatetimeIndex(converted)

@@ -36,7 +36,7 @@ class WalkForwardMode(str, Enum):
 class WalkForwardConfig:
     """Observation-count split protocol for an ordered validated timestamp index."""
 
-    mode: WalkForwardMode | str
+    mode: WalkForwardMode
     train_size: int
     validation_size: int
     test_size: int

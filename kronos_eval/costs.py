@@ -5,9 +5,10 @@ from __future__ import annotations
 import hashlib
 import math
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from numbers import Integral, Real
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -390,7 +391,7 @@ def _economic_metrics(
     net = periods["net_return"].to_numpy()
     if (net <= -1.0).any():
         raise CostModelError("net paper return reaches or exceeds total portfolio loss")
-    wealth = np.cumprod(1.0 + net)
+    wealth: np.ndarray = np.cumprod(1.0 + net)
     peak = np.maximum.accumulate(np.concatenate([[1.0], wealth]))[1:]
     drawdown = wealth / peak - 1.0
     volatility = float(np.std(net, ddof=1) * math.sqrt(periods_per_year)) if len(net) > 1 else None
@@ -462,7 +463,11 @@ def _finite_non_negative(value: object, name: str) -> None:
 
 def _aware_utc_index(values: object, name: str) -> pd.DatetimeIndex:
     converted = []
-    for value in values:
+    try:
+        iterator = iter(cast(Iterable[object], values))
+    except TypeError as exc:
+        raise CostModelError(f"{name} must be an iterable of timestamps") from exc
+    for value in iterator:
         try:
             timestamp = pd.Timestamp(value)
         except (TypeError, ValueError) as exc:
