@@ -1,7 +1,7 @@
 # Kronos research status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `813aee9a02fa088ff219e0a503cb15afd046471e`
+Evidence baseline: `master` at `4bb099f8af7d9a7f9cf8ed91b22fe54a9b9afbb4`
 
 ## Decision
 
@@ -32,7 +32,8 @@ These are software and checkpoint-reproducibility results. They are not independ
 - reference data-card and scalable-storage policy templates.
 - reusable split, normalization, feature, adjustment, universe, selection, and holdout causality audits with deliberately contaminated fixtures.
 - typed raw-path forecasting, isolated seeded or greedy generation, configurable path summaries, and explicit generated-candle validation/projection accounting, with pinned-checkpoint compatibility confirmed in PR #15.
-- deterministic expanding/rolling split planning, exact purge/embargo and fixed-holdout records, and identity-bound leakage-audit attachment on the active phase branch.
+- deterministic expanding/rolling split planning, exact purge/embargo and fixed-holdout records, and identity-bound leakage-audit attachment merged in PR #16.
+- eleven frozen, identity-bound forecast baselines receiving the same validated OHLCVA information set on the active phase branch. Their deterministic or seeded output correctness has been tested, but no comparative market metric has been calculated.
 
 Engineering completion must not be reported as financial validation.
 
