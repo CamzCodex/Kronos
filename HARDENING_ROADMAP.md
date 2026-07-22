@@ -78,6 +78,15 @@ The safe archive foundation merged in PR #8. Qlib preprocessing and training wir
 - [ ] Separate model selection periods from final untouched evaluation periods.
 - [ ] Document whether released checkpoints predate any normalization fixes.
 
+## Research data contract
+
+The canonical contract is developed separately from the legacy Qlib demo so that dataset identity and validation can be tested without importing Qlib.
+
+- [x] Merge canonical bar schema and structured multi-issue validation.
+- [x] Merge deterministic dataset identity, immutable manifest writes, and data-card templates.
+- [ ] Select and document an authoritative exchange-calendar and universe-membership source for the first benchmark.
+- [ ] Wire the selected ingestion adapter to Parquet/Arrow research storage and bounded `.kronos.zip` evidence artifacts.
+
 ## Merge gates
 
 A phase is ready for `master` only when:
