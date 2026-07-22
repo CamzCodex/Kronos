@@ -167,7 +167,7 @@
 - risks: Caller metadata and approval authority are not independently attested; local storage is not signed or WORM; alias writers are not cross-process locked; exact bytes can still encode causally invalid data.
 - reversal trigger: A versioned registry or MLflow-compatible backend that preserves content verification, immutable history, reconstructability, and stricter attestation with migration tests.
 - related commit: Introduced by `registry/experiment-and-model-lineage`
-- related PR: This phase's pull request
+- related PR: `#20`
 
 ## DEC-014 — No reviewed reference source is approved
 
@@ -180,4 +180,4 @@
 - risks: The zero-shot benchmark remains blocked until data authority is supplied; a later approved source may require adapter-specific work and cost.
 - reversal trigger: A complete user-supplied licensed evidence package or separately authorized paid-source evaluation passes the versioned source gate and downstream canonical/leakage validation.
 - related commit: Introduced by `data/reference-source-gate`
-- related PR: This phase's pull request
+- related PR: `#21`
