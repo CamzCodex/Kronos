@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import ast
 import pickle
+import subprocess
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -170,6 +172,24 @@ def test_qlib_dataset_refuses_legacy_pickle_by_default(tmp_path, monkeypatch):
 
 def test_unsafe_pickle_compatibility_defaults_to_false():
     assert Config().allow_unsafe_pickle is False
+
+
+def test_script_style_dataset_import_remains_supported():
+    repository_root = Path(__file__).resolve().parents[1]
+    finetune_directory = repository_root / "finetune"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import archive_paths; import dataset; assert dataset.QlibDataset is not None",
+        ],
+        cwd=finetune_directory,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
 
 
 def test_training_dataset_sources_have_no_direct_pickle_calls():
