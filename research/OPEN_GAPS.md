@@ -62,19 +62,19 @@ Status date: 2026-07-22
 - related PR: `#15`
 - related experiment: None
 
-## GAP-005 — No complete walk-forward evaluation runner
+## GAP-005 — No real source-to-result walk-forward execution
 
 - gap_id: `GAP-005`
-- title: Split and baseline protocols exist but comparable out-of-sample execution is absent
-- description: PRs #16 and #17 implement deterministic split/audit binding and all eleven required frozen comparators. The active phase adds normalized forecast metrics, causal paper-return cost ledgers, cost sensitivity, paired fold bootstrap summaries, and separation of final-holdout scores. Audit-gated forecast execution, training-only scale/regime provenance, immutable run artifacts, and physical final-data access enforcement remain absent.
+- title: Evaluation contracts exist but source adapters and real execution are absent
+- description: PRs #16–#18 implement split/audit binding, all mandatory comparators, scoring, causal paper-cost accounting, cost sensitivity, paired fold aggregation, and final-score separation. The active phase adds audit revalidation, exact comparator/truth matching, test/final boundary enforcement, and immutable fold-result writes. No real source adapter, training-only scale/regime provenance, byte-verifying registry, or physical final-data isolation exists.
 - severity: Critical
 - impact: The central mission question cannot be answered.
-- evidence: `kronos_eval/walk_forward.py`, `baselines.py`, `metrics.py`, `costs.py`, `aggregation.py`, their regression tests, protocol documents, and Phase 5A/5B/5C adversarial reviews.
+- evidence: `kronos_eval/walk_forward.py`, `baselines.py`, `metrics.py`, `costs.py`, `aggregation.py`, `runner.py`, their regression tests, protocol documents, and Phase 5A–5D adversarial reviews.
 - owner: Unassigned
-- status: Partially resolved — evaluation runner remains a promotion blocker
-- required work: Audit-gated runner and immutable results, feature-matched comparators, training-only scale/regime provenance, factor exposure source, verified real fold audits, physical final-holdout enforcement, evaluation CI smoke
+- status: Partially resolved — real execution remains a promotion blocker
+- required work: Source-specific forecast/baseline/scale/regime adapters, artifact-verifying registry, feature-matched comparators, factor exposure source, verified real fold audits, physical final-holdout enforcement, evaluation CI smoke
 - blocking decision: Model usefulness and fine-tuning gate
-- related PR: `#16`, `#17`, and this phase's pull request
+- related PR: `#16`, `#17`, `#18`, and this phase's pull request
 - related experiment: None
 
 ## GAP-006 — No zero-shot reference benchmark

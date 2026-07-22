@@ -142,3 +142,16 @@
 - reversal trigger: A versioned execution simulator with explicit rejected/partial/delayed fills and evidence that it is at least as conservative.
 - related commit: Introduced by `evaluation/metrics-and-costs`
 - related PR: This phase's pull request
+
+## DEC-012 — Development folds require a complete audited comparator suite
+
+- decision_id: `DEC-012`
+- date: 2026-07-22
+- decision: Execute a development fold only from a revalidated passed audit; require exactly the eleven mandatory baselines plus one named candidate on one shared information identity and identical target/reference/scale/regime rows; refuse test-boundary and final-holdout violations; and persist the complete result as an immutable atomic JSON artifact.
+- alternatives: Trust a wrapper without revalidation; permit partial comparator sets; score models on independently supplied targets; allow final rows in development results; persist chat-only or mutable outputs.
+- evidence: `kronos_eval/runner.py`, runner regression tests, the audit-gated runner specification, and the Phase 5D adversarial review.
+- reasoning: A strong model can appear superior if audits are bypassed, weak baselines disappear, truth rows differ, or final data enters development. One identity-bound complete artifact makes these failures observable and blocks silent substitution.
+- risks: Valid hashes do not prove honest source provenance, upstream artifact bytes are not verified until the registry exists, optional costs can be omitted, and filesystem-level final-data isolation remains absent.
+- reversal trigger: A versioned runner/registry protocol that provides stronger source authentication, artifact verification, comparator completeness, and final isolation with compatibility evidence.
+- related commit: Introduced by `evaluation/audit-gated-runner`
+- related PR: This phase's pull request

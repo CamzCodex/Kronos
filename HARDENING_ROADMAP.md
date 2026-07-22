@@ -76,6 +76,7 @@ The safe archive foundation merged in PR #8. Qlib preprocessing and training wir
 - [x] Implement directional, calibration, rank, probabilistic, regime, and price-error metrics; real audited results remain open.
 - [x] Implement explicit fees, spread, slippage, turnover, participation impact, exposure, drawdown, and cost-sensitivity accounting; real strategy tests remain open.
 - [x] Separate development roles from one fixed embargoed final-holdout boundary; physical access enforcement and the final run remain open.
+- [x] Add a passed-audit-only complete comparator runner and immutable fold-result writer; real source execution remains open.
 - [ ] Document whether released checkpoints predate any normalization fixes.
 
 ## Research data contract
