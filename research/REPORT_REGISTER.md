@@ -1,7 +1,7 @@
 # Kronos report register
 
 Register date: 2026-07-22  
-Evidence baseline: `c94cf3be1af5f57849e67defeb25c82ddd93815d`
+Current register baseline: `577af114c2fdae7fde5dfc4f89475ebcda06e074`
 
 No zero-shot, walk-forward, baseline-comparison, or economic benchmark report exists yet.
 
@@ -11,5 +11,6 @@ No zero-shot, walk-forward, baseline-comparison, or economic benchmark report ex
 | Kronos research status | Separates software validation from absent financial evidence and records the current research-only decision | 2026-07-22 | Unknown | Pinned regression revisions only | `c94cf3be1af5f57849e67defeb25c82ddd93815d` evidence baseline | High for status; no confidence in alpha | None | Current | `docs/status/KRONOS_RESEARCH_STATUS.md` |
 | Phase 4D adversarial review | Reviews streaming archive failure modes, script compatibility, and residual memory limits | 2026-07-22 | N/A | N/A | `c94cf3be1af5f57849e67defeb25c82ddd93815d` | High | None | Current | `docs/reviews/ADVERSARIAL_REVIEW_PHASE_4D.md` |
 | Phase 0 adversarial review | Challenges repository state, split integrity, evidence claims, and CI coverage | 2026-07-22 | Unknown | Pinned regression revisions only | `c94cf3be1af5f57849e67defeb25c82ddd93815d` evidence baseline | High for repository findings | None | Current | `docs/reviews/ADVERSARIAL_REVIEW_PHASE_0.md` |
+| Phase 2 adversarial review | Challenges the canonical market-data contract, calendar authority, dataset identity, adjustment causality, and universe controls | 2026-07-22 | No real dataset | N/A | Introduced by `data/canonical-market-contract` | High for contract findings | None | Current | `docs/reviews/ADVERSARIAL_REVIEW_PHASE_2.md` |
 
 Future benchmark entries must identify a deterministic dataset ID, model/checkpoint revision, code commit, confidence, supersession relation, and immutable result paths.

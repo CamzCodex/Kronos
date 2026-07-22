@@ -1,13 +1,13 @@
 # Kronos research status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `c94cf3be1af5f57849e67defeb25c82ddd93815d`
+Evidence baseline: `master` at `577af114c2fdae7fde5dfc4f89475ebcda06e074`
 
 ## Decision
 
 Current classification: **RESEARCH ONLY**.
 
-There is currently no defensible repository-backed answer to whether Kronos provides incremental, economically useful forecasting information over simple baselines. The correct answer is **Unknown**. Fine-tuning promotion and the paper-portfolio vertical slice are blocked pending causal data contracts, walk-forward evaluation, and a released-checkpoint zero-shot benchmark.
+There is currently no defensible repository-backed answer to whether Kronos provides incremental, economically useful forecasting information over simple baselines. The correct answer is **Unknown**. Fine-tuning promotion and the paper-portfolio vertical slice are blocked pending a real causally approved dataset, walk-forward evaluation, and a released-checkpoint zero-shot benchmark.
 
 ## What has been scientifically validated
 
@@ -27,6 +27,9 @@ These are software and checkpoint-reproducibility results. They are not independ
 - safe deterministic portable DataFrame archives;
 - safe Qlib I/O and legacy-pickle refusal;
 - memory-bounded multi-frame archive writing.
+- canonical bar field semantics and multi-issue validation reports;
+- deterministic dataset content/configuration identity and immutable manifest persistence;
+- reference data-card and scalable-storage policy templates.
 
 Engineering completion must not be reported as financial validation.
 
@@ -48,8 +51,9 @@ Engineering completion must not be reported as financial validation.
 
 ## Known data limitations
 
-- No canonical bar schema or exchange-calendar validation exists.
-- No immutable dataset manifest, raw-data hash register, universe-history record, or adjustment-policy identifier exists.
+- A canonical bar schema and manifest implementation exists, but no real benchmark dataset has yet been ingested and approved through it.
+- Built-in exchange calendars deliberately lack authoritative holiday histories; a selected source must supply one for evidence-grade validation.
+- No raw-data hash register, universe-history record, or real adjustment-policy artifact exists for a benchmark dataset.
 - The example Qlib universe is `csi300`, but membership history and survivorship treatment are not captured.
 - Default Qlib train/validation/test ranges materially overlap. The current split cannot be treated as independent evidence.
 - The bundled checkpoint-regression CSV is a software fixture, not a declared reference benchmark dataset.

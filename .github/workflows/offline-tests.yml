@@ -49,4 +49,6 @@ jobs:
             tests/test_finetune_csv_normalization.py \
             tests/test_data_io.py \
             tests/test_archive_paths.py \
-            tests/test_backtest_io.py
+            tests/test_backtest_io.py \
+            tests/test_market_data_validation.py \
+            tests/test_dataset_manifests.py
