@@ -9,17 +9,11 @@ from pathlib import Path
 import pandas as pd
 
 try:
-    from .data_io import (
-        UnsafeLegacyFormatError,
-        load_frame_mapping,
-        save_frame_mapping,
-    )
+    from .archive_writer import save_frame_mapping
+    from .data_io import UnsafeLegacyFormatError, load_frame_mapping
 except ImportError:  # Script-style execution from the finetune directory.
-    from data_io import (
-        UnsafeLegacyFormatError,
-        load_frame_mapping,
-        save_frame_mapping,
-    )
+    from archive_writer import save_frame_mapping
+    from data_io import UnsafeLegacyFormatError, load_frame_mapping
 
 SAFE_ARCHIVE_SUFFIX = ".kronos.zip"
 LEGACY_PICKLE_SUFFIX = ".pkl"
@@ -60,7 +54,7 @@ def save_named_frame_mapping(
     directory: str | os.PathLike[str],
     name: str,
 ) -> Path:
-    """Save a prepared dataset under the canonical safe filename."""
+    """Stream a prepared dataset to the canonical safe filename."""
 
     return save_frame_mapping(data, safe_archive_path(directory, name))
 

@@ -1,5 +1,7 @@
 """Fine-tuning support utilities for Kronos."""
 
+from .archive_writer import save_frame_mapping
+
 from .archive_paths import (
     legacy_pickle_path,
     load_named_frame_mapping,
@@ -14,7 +16,6 @@ from .data_io import (
     load_legacy_pickle,
     load_safe_frame_mapping,
     migrate_legacy_pickle,
-    save_frame_mapping,
 )
 
 __all__ = [
