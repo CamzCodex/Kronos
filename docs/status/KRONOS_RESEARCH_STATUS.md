@@ -1,7 +1,7 @@
 # Kronos research status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `7f99e93962f1a4baee617874605871433578731e` plus the data-acquisition closeout phase
+Evidence baseline: `master` at `49eabbb10ba1301687bf0f832a1353af0dc82cda` plus the local-runtime readiness phase
 
 ## Decision
 
@@ -40,6 +40,7 @@ These are software and checkpoint-reproducibility results. They are not independ
 - a fail-closed reference-source evidence gate merged in PR #21. Its tests validate refusal/identity mechanics only; no real source passes and no source artifact is invented.
 - source-gate v1.1 paid-entitlement binding: authorized paid access cannot pass without the SHA-256 identity of a retained confidential contract artifact. This strengthens evidence identity but does not approve a licence.
 - required quality/security CI merged in PR #23, plus a local-only Web UI boundary with strict market-input refusal and 37 route-level regressions. These are security and integrity mechanics; interactive UI predictions are not benchmark evidence.
+- local runtime doctor/smoke/latency benchmarking, exact interactive checkpoint revisions, enforced model/tokenizer evaluation mode, and corrected latest-window selection. These establish operability and measurement mechanics only; synthetic smoke/latency outputs are not forecast evidence.
 
 Engineering completion must not be reported as financial validation.
 

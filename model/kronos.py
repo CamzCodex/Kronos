@@ -410,7 +410,7 @@ def auto_regressive_inference(
         deterministic=False,
         generator=None,
 ):
-    with torch.no_grad():
+    with torch.inference_mode():
         x = torch.clip(x, -clip, clip)
 
         device = x.device
@@ -560,12 +560,20 @@ class KronosPredictor:
 
         self.tokenizer = self.tokenizer.to(self.device)
         self.model = self.model.to(self.device)
+        # Prediction must not depend on whether a caller remembered to disable
+        # dropout.  Evaluation mode also avoids training-only work at runtime.
+        self.tokenizer.eval()
+        self.model.eval()
 
     def generate(self, x, x_stamp, y_stamp, pred_len, T, top_k, top_p, sample_count, verbose):
 
-        x_tensor = torch.from_numpy(np.array(x).astype(np.float32)).to(self.device)
-        x_stamp_tensor = torch.from_numpy(np.array(x_stamp).astype(np.float32)).to(self.device)
-        y_stamp_tensor = torch.from_numpy(np.array(y_stamp).astype(np.float32)).to(self.device)
+        x_tensor = torch.as_tensor(np.asarray(x, dtype=np.float32), device=self.device)
+        x_stamp_tensor = torch.as_tensor(
+            np.asarray(x_stamp, dtype=np.float32), device=self.device
+        )
+        y_stamp_tensor = torch.as_tensor(
+            np.asarray(y_stamp, dtype=np.float32), device=self.device
+        )
 
         preds = auto_regressive_inference(self.tokenizer, self.model, x_tensor, x_stamp_tensor, y_stamp_tensor, self.max_context, pred_len,
                                           self.clip, T, top_k, top_p, sample_count, verbose)
@@ -588,9 +596,13 @@ class KronosPredictor:
     ):
         """Generate unaggregated paths without changing legacy ``generate`` semantics."""
 
-        x_tensor = torch.from_numpy(np.array(x).astype(np.float32)).to(self.device)
-        x_stamp_tensor = torch.from_numpy(np.array(x_stamp).astype(np.float32)).to(self.device)
-        y_stamp_tensor = torch.from_numpy(np.array(y_stamp).astype(np.float32)).to(self.device)
+        x_tensor = torch.as_tensor(np.asarray(x, dtype=np.float32), device=self.device)
+        x_stamp_tensor = torch.as_tensor(
+            np.asarray(x_stamp, dtype=np.float32), device=self.device
+        )
+        y_stamp_tensor = torch.as_tensor(
+            np.asarray(y_stamp, dtype=np.float32), device=self.device
+        )
 
         sample_paths = auto_regressive_inference(
             self.tokenizer,

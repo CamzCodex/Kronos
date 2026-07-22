@@ -43,11 +43,33 @@
 
 </p>
 
-> Kronos is the **first open-source foundation model** for financial candlesticks (K-lines), 
+> Kronos is the **first open-source foundation model** for financial candlesticks (K-lines),
 > trained on data from over **45 global exchanges**.
 
 
 </div>
+
+## CamzCodex fork status
+
+This fork packages the upstream model with fail-closed data/evaluation contracts, pinned released
+checkpoint identities, local security controls, experiment lineage, and reproducible local runtime
+commands. It is currently **engineering hardened / research not validated**: no approved real
+dataset has yet demonstrated incremental economic value over the mandatory baseline suite.
+
+For the shortest supported local path:
+
+```shell
+python -m pip install -e ".[dev,webui]"
+kronos-runtime doctor --device auto
+kronos-runtime smoke --device auto
+python scripts/verify_local.py --full --device auto
+kronos-web --data-dir ./data
+```
+
+Windows 11 and Radeon RX 9070 users should follow the dedicated
+[local installation and performance runbook](docs/operations/LOCAL_RUNBOOK.md) so the correct AMD
+PyTorch build is installed before the package. `kronos-runtime benchmark` measures local latency for
+the exact pinned checkpoints; it is not a trading-performance benchmark.
 
 ## 📰 News
 *   🚩 **[2025.11.10]** Kronos has been accpeted by AAAI 2026.
@@ -86,10 +108,18 @@ We release a family of pre-trained models with varying capacities to suit differ
 
 ### Installation
 
-1. Install Python 3.10+, and then install the dependencies:
+1. Install Python 3.10+ (Python 3.12 is required by AMD's current Windows ROCm build), create a
+   virtual environment, and install the package:
 
 ```shell
-pip install -r requirements.txt
+python -m pip install -e ".[dev,webui]"
+```
+
+2. Verify the environment before downloading a checkpoint:
+
+```shell
+kronos-runtime doctor --device auto
+kronos-runtime smoke --device auto
 ```
 
 ### 📈 Making Forecasts
@@ -262,7 +292,10 @@ After running, you will find `train_data.kronos.zip`, `val_data.kronos.zip`, and
 
 The finetuning process consists of two stages: finetuning the tokenizer and then the predictor. Both training scripts are designed for multi-GPU training using `torchrun`.
 
-> **Research-integrity warning:** the default date ranges in `finetune/config.py` overlap beyond their stated lookback purpose. They are demonstration settings and must not be used to claim out-of-sample performance. Fine-tuning and benchmark promotion are blocked until the leakage auditor and non-overlapping split contract are implemented.
+> **Research-integrity warning:** the default target ranges in `finetune/config.py` are now
+> non-overlapping and mechanically checked, but they remain demonstration settings backed by an
+> unapproved source. Fine-tuning and benchmark promotion remain blocked until a licensed real
+> dataset passes the source/leakage gates and the physical final-holdout protocol is implemented.
 
 #### 3.1 Finetune the Tokenizer
 

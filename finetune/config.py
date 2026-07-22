@@ -1,4 +1,4 @@
-import os
+from datetime import date
 
 
 class Config:
@@ -31,11 +31,12 @@ class Config:
         # =================================================================
         # Dataset Splitting & Paths
         # =================================================================
-        # Note: The validation/test set starts earlier than the training/validation set ends
-        # to account for the `lookback_window`.
+        # These target ranges never overlap. Context rows must be handled as
+        # explicitly labelled context-only buffers by a future approved source
+        # adapter; target membership is never expanded backwards for lookback.
         self.train_time_range = ["2011-01-01", "2022-12-31"]
-        self.val_time_range = ["2022-09-01", "2024-06-30"]
-        self.test_time_range = ["2024-04-01", "2025-06-05"]
+        self.val_time_range = ["2023-01-01", "2024-06-30"]
+        self.test_time_range = ["2024-07-01", "2025-06-05"]
         self.backtest_time_range = ["2024-07-01", "2025-06-05"]
 
         # TODO: Directory for prepared .kronos.zip datasets.
@@ -124,6 +125,41 @@ class Config:
         self.inference_sample_count = 5
         self.backtest_batch_size = 1000
         self.backtest_benchmark = self._set_benchmark(self.instrument)
+        self._validate_ranges()
+
+    @staticmethod
+    def _range_dates(value, name):
+        if not isinstance(value, (list, tuple)) or len(value) != 2:
+            raise ValueError(f"{name} must contain exactly two ISO dates")
+        try:
+            start, end = (date.fromisoformat(item) for item in value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{name} must contain valid ISO dates") from exc
+        if start > end:
+            raise ValueError(f"{name} start must not follow its end")
+        return start, end
+
+    def _validate_ranges(self):
+        """Fail closed when demo target ranges overlap or escape the dataset."""
+
+        dataset_start = date.fromisoformat(self.dataset_begin_time)
+        dataset_end = date.fromisoformat(self.dataset_end_time)
+        train_start, train_end = self._range_dates(
+            self.train_time_range, "train_time_range"
+        )
+        val_start, val_end = self._range_dates(self.val_time_range, "val_time_range")
+        test_start, test_end = self._range_dates(
+            self.test_time_range, "test_time_range"
+        )
+        backtest_start, backtest_end = self._range_dates(
+            self.backtest_time_range, "backtest_time_range"
+        )
+        if not (dataset_start <= train_start and test_end <= dataset_end):
+            raise ValueError("target ranges must be contained by the dataset range")
+        if not (train_end < val_start and val_end < test_start):
+            raise ValueError("train, validation, and test target ranges must not overlap")
+        if not (test_start <= backtest_start <= backtest_end <= test_end):
+            raise ValueError("backtest_time_range must be contained by test_time_range")
 
     def _set_benchmark(self, instrument):
         dt_benchmark = {

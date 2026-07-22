@@ -34,12 +34,12 @@ drops invalid rows. These checks do not prove an authoritative calendar, causal 
 adjustment, point-in-time membership, licensing, freshness, or freedom from leakage. UI outputs
 remain demonstration artifacts and cannot enter the experiment registry as decision-grade evidence.
 
-### Medium — checkpoint acquisition is not immutable in this UI
+### Resolved medium finding — checkpoint acquisition is revision-pinned
 
-The UI names Hugging Face model IDs but does not bind the download to the exact revisions used by
-the released-checkpoint regression. A changed upstream artifact could therefore alter interactive
-results. This does not affect the pinned checkpoint test, but the UI must not be used as the
-reference benchmark launcher.
+The original hardening phase named Hugging Face model IDs without exact revisions. The local-runtime
+phase now binds mini, small, and base model/tokenizer pairs to exact 40-character revisions and
+returns those identities when a model loads. The UI must still not be used as the reference
+benchmark launcher because its data is not source/leakage approved and its saved results are mutable.
 
 ### Medium — browser dependencies remain externally hosted
 

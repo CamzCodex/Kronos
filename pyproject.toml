@@ -25,9 +25,11 @@ classifiers = [
 dependencies = [
   "numpy>=1.24",
   "pandas>=2.0,<3",
-  "torch>=2.0",
+  "torch>=2.11,<2.14; platform_system != 'Windows'",
+  "torch>=2.9,<2.14; platform_system == 'Windows'",
   "einops>=0.8,<1",
-  "huggingface-hub>=0.33.1,<2",
+  "huggingface-hub>=0.33.1,<1",
+  "socksio>=1.0,<2",
   "matplotlib>=3.9,<4",
   "tqdm>=4.67,<5",
   "safetensors>=0.6,<1",
@@ -53,18 +55,36 @@ dev = [
   "ruff>=0.9",
 ]
 
+[project.scripts]
+kronos-runtime = "kronos_runtime.cli:main"
+kronos-web = "webui.run:main"
+
 [project.urls]
 Homepage = "https://github.com/CamzCodex/Kronos"
 Source = "https://github.com/CamzCodex/Kronos"
 Issues = "https://github.com/CamzCodex/Kronos/issues"
 
 [tool.setuptools.packages.find]
-include = ["model", "model.*", "finetune", "finetune.*", "kronos_data", "kronos_data.*", "kronos_eval", "kronos_eval.*"]
+include = [
+  "model",
+  "model.*",
+  "finetune",
+  "finetune.*",
+  "kronos_data",
+  "kronos_data.*",
+  "kronos_eval",
+  "kronos_eval.*",
+  "kronos_runtime",
+  "kronos_runtime.*",
+  "webui",
+  "webui.*",
+]
 
 [tool.setuptools.package-data]
 model = ["py.typed"]
 kronos_data = ["py.typed"]
 kronos_eval = ["py.typed"]
+webui = ["templates/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -98,6 +118,8 @@ python_version = "3.10"
 files = [
   "kronos_data",
   "kronos_eval",
+  "kronos_runtime",
+  "model/catalog.py",
   "model/forecast.py",
   "webui/security.py",
   "webui/run.py",

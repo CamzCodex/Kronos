@@ -1,7 +1,10 @@
 name: Quality and security gates
 
 on:
+  pull_request:
   push:
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
@@ -36,9 +39,13 @@ jobs:
           python -m ruff check \
             kronos_data \
             kronos_eval \
+            kronos_runtime \
+            model/catalog.py \
             model/forecast.py \
             finetune/archive_writer.py \
+            finetune/config.py \
             finetune/data_io.py \
+            scripts/verify_local.py \
             webui/security.py \
             webui/run.py
 
@@ -120,6 +127,9 @@ jobs:
 
       - name: Run Web UI security regressions
         run: python -m pytest -q tests/webui/test_security.py
+
+      - name: Run local runtime smoke
+        run: kronos-runtime smoke --device cpu
 
   secret-scan:
     name: Repository secret scan

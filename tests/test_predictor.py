@@ -129,6 +129,17 @@ class TestPredictorBatchConsistency:
 
 class TestPredictorNoGradient:
 
+    def test_predictor_forces_evaluation_mode(self, small_tokenizer_config, small_model_config):
+        tokenizer = KronosTokenizer(**small_tokenizer_config)
+        model = Kronos(**small_model_config)
+        tokenizer.train()
+        model.train()
+
+        created = KronosPredictor(model, tokenizer, device="cpu", max_context=32)
+
+        assert not created.tokenizer.training
+        assert not created.model.training
+
     def test_no_gradients_during_prediction(self, predictor):
         """Predict should run under no_grad context."""
         df, dates = _make_ohlcv_df(20)
@@ -136,7 +147,7 @@ class TestPredictorNoGradient:
         y_ts = pd.Series(pd.date_range(dates.iloc[-1] + pd.Timedelta(hours=1), periods=3, freq="h"))
 
         # Ensure model params don't accumulate grads
-        result = predictor.predict(
+        predictor.predict(
             df=df, x_timestamp=x_ts, y_timestamp=y_ts,
             pred_len=3, verbose=False, sample_count=1, top_k=1
         )

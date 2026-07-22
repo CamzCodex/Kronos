@@ -2,19 +2,19 @@
 
 Status date: 2026-07-22
 
-## GAP-001 — Overlapping demo dataset splits
+## GAP-001 — Overlapping demo dataset splits (resolved)
 
 - gap_id: `GAP-001`
 - title: Overlapping Qlib train, validation, and test ranges
-- description: Default configuration shares observations across train/validation and validation/test for periods materially longer than the declared lookback accommodation.
-- severity: Critical
-- impact: Invalidates model-selection, calibration, test, and final-holdout independence claims.
-- evidence: `finetune/config.py` lines defining 2011-01-01–2022-12-31 training, 2022-09-01–2024-06-30 validation, and 2024-04-01–2025-06-05 test.
-- owner: Unassigned
-- status: Open — promotion blocker
-- required work: Define non-overlapping target intervals, explicit context-only buffers, purge/embargo rules, and regression tests.
-- blocking decision: Fine-tuning, benchmark promotion, and paper-portfolio work
-- related PR: None
+- description: The old defaults overlapped. The defaults now use disjoint target ranges (train through 2022-12-31, validation from 2023-01-01 through 2024-06-30, and test from 2024-07-01), validate ordering/containment at construction, and reject mutations that reintroduce overlap. Context is no longer justified by overlapping target membership.
+- severity: Resolved critical defect; remaining source/final-isolation gaps are tracked separately
+- impact: The bundled demonstration configuration no longer creates direct target-date overlap. This does not make its unapproved source or test/backtest reuse decision-grade.
+- evidence: `finetune/config.py`, `tests/test_finetune_config.py`, and the local-runtime adversarial review.
+- owner: Resolved by local-runtime readiness phase
+- status: Resolved for bundled defaults
+- required work: Approved source adapters must still implement explicit context-only buffers, purge/embargo, and physical final isolation under GAP-002/GAP-005.
+- blocking decision: None independently; GAP-002/GAP-005/GAP-006 remain blockers
+- related PR: Local-runtime readiness PR
 - related experiment: None
 
 ## GAP-002 — No approved canonical benchmark dataset
@@ -162,7 +162,22 @@ Status date: 2026-07-22
 - evidence: `webui/app.py`, `webui/security.py`, `webui/run.py`, `webui/start.sh`, `.gitignore`, `tests/webui/test_security.py`, and `docs/reviews/ADVERSARIAL_REVIEW_WEBUI_SECURITY.md`.
 - owner: Unassigned
 - status: Partially resolved — approved for deliberate single-user loopback use only; remote deployment remains blocked
-- required work: Before any remote use, design and test authentication/authorization, TLS, rate limiting, multi-user isolation, workload quotas/cancellation, production serving, immutable checkpoint revisions, self-hosted browser assets, and secret/result governance.
+- required work: Before any remote use, design and test authentication/authorization, TLS, rate limiting, multi-user isolation, workload quotas/cancellation, production serving, self-hosted browser assets, and secret/result governance. Exact interactive checkpoint revisions are already enforced.
 - blocking decision: Any Web UI deployment, Tailscale exposure, or production-readiness claim
 - related PR: Web UI security PR
 - related experiment: None
+
+## GAP-012 — Local accelerator performance is not yet measured
+
+- gap_id: `GAP-012`
+- title: No RX 9070 operational benchmark artifact exists
+- description: The repository now provides pinned-checkpoint doctor, smoke, and latency benchmarking commands plus an AMD Windows runbook. This sandbox proves CPU operability only and cannot measure Cam's RX 9070, current driver stability, or the relative mini/small/base latency-memory trade-off.
+- severity: Medium operational gap; not a scientific promotion blocker
+- impact: The best local model/context/horizon/sample setting cannot be selected from measured Radeon evidence yet.
+- evidence: `kronos_runtime/`, `docs/operations/LOCAL_RUNBOOK.md`, and the local-runtime adversarial review.
+- owner: Local workstation operator
+- status: Partially resolved — instrumentation and acceptance commands complete; hardware run pending
+- required work: Run identical `kronos-runtime benchmark` settings for mini/small/base on the RX 9070, retain the JSON outputs, and choose the local default on observed latency/memory without treating it as alpha evidence.
+- blocking decision: Local performance tuning only
+- related PR: Local-runtime readiness PR
+- related experiment: None; operational benchmark outputs are not market experiments
