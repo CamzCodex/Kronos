@@ -44,6 +44,7 @@ jobs:
           python - <<'PY'
           from importlib.metadata import version
           import finetune
+          import kronos_data
           import model
           from finetune import (
               archive_writer,
@@ -63,6 +64,9 @@ jobs:
           assert KronosPredictor is not None
           assert KronosTokenizer is not None
           assert finetune is not None
+          assert kronos_data.FEATURE_SCHEMA_VERSION == "1.0.0"
+          assert callable(kronos_data.validate_bars)
+          assert callable(kronos_data.build_dataset_manifest)
           assert callable(load_frame_mapping)
           assert callable(load_named_frame_mapping)
           assert callable(load_test_data)
@@ -90,15 +94,18 @@ jobs:
           from pathlib import Path
 
           import finetune
+          import kronos_data
           import model
           from finetune import archive_paths, archive_writer, backtest_io, data_io
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
           model_imported_from = Path(model.__file__).resolve()
           finetune_imported_from = Path(finetune.__file__).resolve()
+          data_imported_from = Path(kronos_data.__file__).resolve()
 
           assert not model_imported_from.is_relative_to(workspace)
           assert not finetune_imported_from.is_relative_to(workspace)
+          assert not data_imported_from.is_relative_to(workspace)
           assert version("kronos-timeseries") == model.__version__
           assert model.get_model_class("kronos") is model.Kronos
           assert data_io.FORMAT_VERSION == 1
