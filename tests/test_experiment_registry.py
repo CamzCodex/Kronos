@@ -139,6 +139,17 @@ def test_corrupt_or_missing_registered_artifact_invalidates_reconstruction(
     assert registry.get(record.experiment_id, verify_artifacts=False) == record
 
 
+def test_semantically_equal_record_rewrite_is_detected(tmp_path: Path) -> None:
+    registry = ExperimentRegistry(tmp_path / "registry")
+    record = registry.register(_request(tmp_path))
+    path = registry.root / "experiments" / f"{record.experiment_id}.json"
+    value = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps(value, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(ExperimentRegistryError, match="not canonical immutable JSON"):
+        registry.get(record.experiment_id, verify_artifacts=False)
+
+
 def test_configuration_hash_and_non_finite_metadata_are_refused(tmp_path: Path) -> None:
     request = _request(tmp_path)
 
@@ -276,9 +287,15 @@ def test_tampered_record_and_alias_pointer_are_detected(tmp_path: Path) -> None:
     with pytest.raises(ExperimentRegistryError, match="identity hash is invalid"):
         registry.get(record.experiment_id, verify_artifacts=False)
 
+    value["metrics"]["mae"] = record.metrics["mae"]
+    value["unbound_claim"] = "not identity-bound"
+    record_path.write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(ExperimentRegistryError, match="fields do not match"):
+        registry.get(record.experiment_id, verify_artifacts=False)
+
     pointer = registry.root / "aliases" / "candidate.json"
     pointer.write_text("{}\n", encoding="utf-8")
-    with pytest.raises(ExperimentRegistryError, match="invalid alias pointer"):
+    with pytest.raises(ExperimentRegistryError, match="fields do not match"):
         registry.resolve_alias("candidate", verify_artifacts=False)
 
 

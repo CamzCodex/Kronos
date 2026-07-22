@@ -21,6 +21,45 @@ MODEL_ALIASES = frozenset({"candidate", "champion", "rollback", "research-only",
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 _GIT_COMMIT_PATTERN = re.compile(r"[0-9a-f]{40}")
 _EXPERIMENT_ID_PATTERN = re.compile(r"kexp-[0-9a-f]{24}")
+_ARTIFACT_FIELDS = frozenset(
+    {"role", "filename", "sha256", "size_bytes", "media_type", "storage_path"}
+)
+_RECORD_FIELDS = frozenset(
+    {
+        "registry_version",
+        "experiment_id",
+        "created_at",
+        "git_commit",
+        "dirty_tree",
+        "dataset_id",
+        "configuration",
+        "configuration_hash",
+        "feature_schema_version",
+        "model_identifier",
+        "checkpoint_revision",
+        "seed",
+        "fold_definitions",
+        "hardware",
+        "library_versions",
+        "metrics",
+        "artifacts",
+        "approval_status",
+        "approval_evidence",
+        "decision_grade",
+        "supersedes_experiment_id",
+        "warnings",
+    }
+)
+_ALIAS_EVENT_FIELDS = frozenset(
+    {
+        "event_id",
+        "alias",
+        "experiment_id",
+        "previous_experiment_id",
+        "updated_at",
+        "reason",
+    }
+)
 
 
 class ExperimentRegistryError(ValueError):
@@ -71,6 +110,7 @@ class RegisteredArtifact:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> RegisteredArtifact:
+        _require_exact_fields(value, _ARTIFACT_FIELDS, "registered artifact")
         return cls(
             role=str(value["role"]),
             filename=str(value["filename"]),
@@ -234,6 +274,7 @@ class ExperimentRecord:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> ExperimentRecord:
+        _require_exact_fields(value, _RECORD_FIELDS, "experiment record")
         return cls(
             registry_version=str(value["registry_version"]),
             experiment_id=str(value["experiment_id"]),
@@ -288,6 +329,7 @@ class AliasEvent:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> AliasEvent:
+        _require_exact_fields(value, _ALIAS_EVENT_FIELDS, "alias event")
         return cls(
             event_id=str(value["event_id"]),
             alias=str(value["alias"]),
@@ -360,11 +402,16 @@ class ExperimentRegistry:
         if not path.is_file():
             raise FileNotFoundError(f"unknown experiment {experiment_id}")
         try:
-            value = json.loads(path.read_text(encoding="utf-8"))
+            raw_bytes = path.read_bytes()
+            value = json.loads(raw_bytes)
             record = ExperimentRecord.from_dict(value)
+        except ExperimentRegistryError:
+            raise
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise ExperimentRegistryError(f"invalid experiment record {experiment_id}") from exc
         self._validate_record(record, expected_id=experiment_id)
+        if record.to_json().encode("utf-8") != raw_bytes:
+            raise ExperimentRegistryError("experiment record is not canonical immutable JSON")
         if verify_artifacts:
             for artifact in record.artifacts:
                 self._verify_artifact(artifact)
@@ -420,10 +467,15 @@ class ExperimentRegistry:
         events = []
         for path in directory.glob("kae-*.json"):
             try:
-                event = AliasEvent.from_dict(json.loads(path.read_text(encoding="utf-8")))
+                raw_bytes = path.read_bytes()
+                event = AliasEvent.from_dict(json.loads(raw_bytes))
+            except ExperimentRegistryError:
+                raise
             except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
                 raise ExperimentRegistryError(f"invalid alias event {path.name}") from exc
             self._validate_alias_event(event, alias)
+            if event.to_json().encode("utf-8") != raw_bytes:
+                raise ExperimentRegistryError("alias event is not canonical immutable JSON")
             if path.stem != event.event_id:
                 raise ExperimentRegistryError("alias event filename and identity disagree")
             events.append(event)
@@ -552,10 +604,15 @@ class ExperimentRegistry:
         if not path.is_file():
             raise FileNotFoundError(f"alias is not assigned: {alias}")
         try:
-            event = AliasEvent.from_dict(json.loads(path.read_text(encoding="utf-8")))
+            raw_bytes = path.read_bytes()
+            event = AliasEvent.from_dict(json.loads(raw_bytes))
+        except ExperimentRegistryError:
+            raise
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise ExperimentRegistryError(f"invalid alias pointer {alias}") from exc
         self._validate_alias_event(event, alias)
+        if event.to_json().encode("utf-8") != raw_bytes:
+            raise ExperimentRegistryError("alias pointer is not canonical JSON")
         event_path = self.root / "alias-events" / alias / f"{event.event_id}.json"
         if not event_path.is_file() or event_path.read_bytes() != path.read_bytes():
             raise ExperimentRegistryError("alias pointer is not backed by immutable history")
@@ -584,6 +641,20 @@ def _validate_json_mapping(value: Mapping[str, Any], name: str) -> None:
         canonical_json(value)
     except (TypeError, ValueError) as exc:
         raise ExperimentRegistryError(f"{name} must contain finite canonical JSON values") from exc
+
+
+def _require_exact_fields(
+    value: Mapping[str, Any], expected: frozenset[str], name: str
+) -> None:
+    if not isinstance(value, Mapping):
+        raise TypeError(f"{name} must be a mapping")
+    actual = set(value)
+    if actual != expected:
+        missing = sorted(expected - actual)
+        extra = sorted(actual - expected)
+        raise ExperimentRegistryError(
+            f"{name} fields do not match registry schema; missing={missing}, extra={extra}"
+        )
 
 
 def _normalized_mapping(value: Mapping[str, Any]) -> dict[str, Any]:
