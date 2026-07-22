@@ -87,6 +87,7 @@ The canonical contract is developed separately from the legacy Qlib demo so that
 - [x] Merge canonical bar schema and structured multi-issue validation.
 - [x] Merge deterministic dataset identity, immutable manifest writes, and data-card templates.
 - [ ] Select and document an authoritative exchange-calendar and universe-membership source for the first benchmark.
+- [x] Add a fail-closed reference-source evidence gate and document why currently reviewed candidates are not approved.
 - [ ] Wire the selected ingestion adapter to Parquet/Arrow research storage and bounded `.kronos.zip` evidence artifacts.
 
 ## Leakage and causality audit
