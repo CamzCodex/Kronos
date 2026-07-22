@@ -67,6 +67,7 @@ jobs:
           assert kronos_data.FEATURE_SCHEMA_VERSION == "1.0.0"
           assert callable(kronos_data.validate_bars)
           assert callable(kronos_data.build_dataset_manifest)
+          assert callable(kronos_data.audit_leakage)
           assert callable(load_frame_mapping)
           assert callable(load_named_frame_mapping)
           assert callable(load_test_data)
