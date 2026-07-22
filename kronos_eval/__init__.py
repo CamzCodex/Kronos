@@ -37,6 +37,16 @@ from .metrics import (
     ForecastScorecard,
     score_forecasts,
 )
+from .runner import (
+    COMPARABLE_METRIC_DIRECTIONS,
+    EVALUATION_RUNNER_VERSION,
+    EvaluationFoldResult,
+    EvaluationRunnerError,
+    EvaluationRunRequest,
+    ForecastSubmission,
+    run_evaluation_fold,
+    write_evaluation_fold_result,
+)
 from .walk_forward import (
     AuditedWalkForwardFold,
     EvaluationContext,
@@ -56,6 +66,8 @@ __all__ = [
     "BASELINE_FEATURE_COLUMNS",
     "BASELINE_SUITE_VERSION",
     "COST_MODEL_VERSION",
+    "COMPARABLE_METRIC_DIRECTIONS",
+    "EVALUATION_RUNNER_VERSION",
     "MANDATORY_BASELINES",
     "METRIC_SUITE_VERSION",
     "REQUIRED_EVALUATION_COLUMNS",
@@ -71,6 +83,9 @@ __all__ = [
     "CostEvaluationResult",
     "CostModelError",
     "EvaluationContext",
+    "EvaluationFoldResult",
+    "EvaluationRunRequest",
+    "EvaluationRunnerError",
     "ExcludedWindow",
     "FoldBoundary",
     "FoldAggregationError",
@@ -79,6 +94,7 @@ __all__ = [
     "ForecastMetricError",
     "ForecastMetricRequest",
     "ForecastScorecard",
+    "ForecastSubmission",
     "WalkForwardConfig",
     "WalkForwardFold",
     "WalkForwardMode",
@@ -90,6 +106,8 @@ __all__ = [
     "evaluate_paper_returns",
     "required_history_size",
     "run_baseline_suite",
+    "run_evaluation_fold",
     "score_forecasts",
     "write_walk_forward_plan",
+    "write_evaluation_fold_result",
 ]

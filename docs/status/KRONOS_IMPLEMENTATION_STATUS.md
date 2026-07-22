@@ -1,21 +1,21 @@
 # Kronos implementation status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `66b3beec583b46b5339fcad97208c04ff8c9e0c2`
+Evidence baseline: `master` at `231b8e686ee936fda43e2b12f569f17cedf569f8`
 Operating mode: research and paper simulation only; no broker execution
 
 ## Executive status
 
-Kronos has a materially stronger engineering foundation than the upstream demo, but it does not yet contain the research system required to determine whether the model adds economically useful information. Storage, sampling, packaging, selected model primitives, pinned-checkpoint numerical regression, the reusable canonical data contract, causal auditor, typed probabilistic forecast contract, deterministic leakage-gated walk-forward split planner, and eleven-method mandatory baseline suite are hardened. Common scoring, paper-cost, and fold-aggregation contracts are implemented on the active phase branch; the audit-gated execution runner, real approved dataset and audit, executable experiment registry, and zero-shot benchmark are not implemented.
+Kronos has a materially stronger engineering foundation than the upstream demo, but it does not yet contain the research system required to determine whether the model adds economically useful information. Storage, sampling, packaging, selected model primitives, pinned-checkpoint numerical regression, the reusable canonical data contract, causal auditor, typed probabilistic forecast contract, deterministic leakage-gated walk-forward split planner, eleven-method mandatory baseline suite, and common scoring/cost/aggregation contracts are hardened. The audit-gated development-fold runner and immutable result writer are implemented on the active phase branch; the real approved dataset/audit, executable experiment registry, source adapters, and zero-shot benchmark are not implemented.
 
 Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VALIDATED**.
 
 ## Reconciled repository state
 
 - Default branch: `master`.
-- Current master SHA at this phase's start: `66b3beec583b46b5339fcad97208c04ff8c9e0c2`.
-- Open pull requests at this phase's start: none after PR #17 merged.
-- Most recent merge at this phase's start: PR #17, mandatory evaluation baseline suite.
+- Current master SHA at this phase's start: `231b8e686ee936fda43e2b12f569f17cedf569f8`.
+- Open pull requests at this phase's start: none after PR #18 merged.
+- Most recent merge at this phase's start: PR #18, evaluation metrics, costs, and fold aggregation.
 - The mission's previously expected SHA, `af9c4bb0d1c6d4883e1d9ea28a83632c1c6eb978`, was correct before PR #11.
 - The repository has no release tag or declared production deployment.
 
@@ -36,13 +36,14 @@ Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VAL
 | Typed raw-path forecast API, explicit randomness, candle validity and repair accounting | PR #15; `model/forecast.py` | Complete for the covered API; pinned released-checkpoint regression passed |
 | Expanding/rolling fold planning, fixed holdout, purge/embargo records and audit binding | PR #16; `kronos_eval/walk_forward.py` | Complete as a reusable protocol; not an evaluation runner or real-data result |
 | Eleven required identical-information baseline forecasts with frozen hashed controls | PR #17; `kronos_eval/baselines.py` | Complete as reference comparators; not a market-performance result |
-| Point/direction/ranking/probabilistic scoring, causal paper-cost ledgers and final-isolated paired fold aggregation | `kronos_eval/metrics.py`; `costs.py`; `aggregation.py` | Implemented on the active phase branch; not run on real forecasts |
+| Point/direction/ranking/probabilistic scoring, causal paper-cost ledgers and final-isolated paired fold aggregation | PR #18; `kronos_eval/metrics.py`; `costs.py`; `aggregation.py` | Complete as calculation contracts; not run on real forecasts |
+| Passed-audit-only complete comparator execution, test/final boundary enforcement, truth matching and immutable fold results | `kronos_eval/runner.py`; `evaluation/audit-gated-runner` | Implemented on the active phase branch; no real inputs or result |
 
 ## Branch reconciliation
 
 ### Current development branches
 
-`evaluation/metrics-and-costs` is the active focused branch for this phase. Its capabilities are not treated as merged until offline and package gates pass.
+`evaluation/audit-gated-runner` is the active focused branch for this phase. Its capabilities are not treated as merged until offline and package gates pass.
 
 ### Retained historical branches
 
@@ -59,6 +60,7 @@ Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VAL
 - `inference/probabilistic-forecast-api`
 - `evaluation/walk-forward-engine`
 - `evaluation/baseline-suite`
+- `evaluation/metrics-and-costs`
 - `import/upstream-pr-247-offline-tests`
 - `import/upstream-pr-262-sampling`
 - `import/upstream-pr-263-csv-leakage`
@@ -78,7 +80,7 @@ Branch deletion is not required for correctness and is deferred until repository
 2. **Critical — no real dataset has passed the leakage auditor:** the reusable gate and identity-bound fold attachment exist, but no selected source has generated complete provenance or a passing real audit.
 3. **High — no approved real dataset:** the canonical contract exists, but no selected provider, authoritative calendar, point-in-time universe, licensed raw snapshot, or immutable benchmark manifest exists.
 4. **High — probabilistic interface not yet empirically calibrated:** PR #15 exposes typed raw samples, quantiles, return distributions, explicit randomness, and repair accounting while retaining legacy wrappers. No walk-forward evidence establishes calibration.
-5. **High — no walk-forward evidence runner:** PRs #16 and #17 provide split and baseline protocols. The active branch adds common forecast scoring, causal paper-cost accounting, and final-isolated paired aggregation. Audit-gated forecast execution, immutable run artifacts, training-only scale/regime provenance, factor exposure, and real runs remain absent.
+5. **High — no real walk-forward execution:** PRs #16–#18 provide split, baseline, scoring, cost, and aggregation protocols. The active branch adds passed-audit-only complete-suite execution and immutable fold results. Source adapters, training-only scale/regime provenance, artifact byte verification/registry, factor exposure, physical final isolation, and real runs remain absent.
 6. **High — no evidence-grade benchmark:** no repository artifact demonstrates incremental forecasting or economic value over a naive baseline.
 7. **Medium — incomplete CI controls:** Ruff is configured but not a required workflow; static type checks, dependency vulnerability scanning, secret scanning, explicit leakage smoke, and evaluation smoke are absent.
 8. **Medium — training runner limitations:** current training scripts assume DDP-oriented execution and do not provide the required single-process CPU/GPU debug, resume, immutable lineage, and promotion controls.
@@ -94,6 +96,7 @@ Branch deletion is not required for correctness and is deferred until repository
 - PR #15 offline and package smoke: success on Python 3.10 and 3.12; pinned released-checkpoint regression success.
 - PR #16 offline and package smoke: success on Python 3.10 and 3.12.
 - PR #17 offline and package smoke: success on Python 3.10 and 3.12.
+- PR #18 offline and package smoke: success on Python 3.10 and 3.12.
 - PR #4 released-checkpoint regression: success at the pinned model and tokenizer revisions.
 - No failing required check was observed during reconciliation.
 - Absence of a workflow is not treated as a passing control.
@@ -102,15 +105,15 @@ Branch deletion is not required for correctness and is deferred until repository
 
 1. Select the reference source and bind its authoritative calendar, point-in-time universe, raw hashes, and licensing to the canonical contract.
 2. Generate and bind leakage-audit provenance for the selected ingestion and evaluation paths.
-3. Merge common metrics, paper costs, and paired fold aggregation only after cross-version and package gates pass.
-4. Add an audit-gated fold runner and immutable result writer that accepts only passed audited folds.
+3. Merge the audit-gated fold runner and immutable result writer only after cross-version and package gates pass.
+4. Add the artifact-verifying experiment/model registry and causal source adapters.
 5. Run the released-checkpoint zero-shot benchmark before any serious fine-tuning or paper-portfolio promotion.
 
 ## Next three planned PRs
 
-1. `evaluation/audit-gated-runner` — connect passed fold audits, forecasts, baselines, targets, scoring, paper costs, and immutable results.
-2. `registry/experiment-and-model-lineage` — reconstructable experiment identity, artifact registration, and promotion aliases.
-3. `data/reference-dataset-adapter` — approved point-in-time source, authoritative calendar/universe, raw hashes, data card, and real audits.
+1. `registry/experiment-and-model-lineage` — reconstructable experiment identity, byte-verified artifacts, approval state, and promotion aliases.
+2. `data/reference-dataset-adapter` — approved point-in-time source, authoritative calendar/universe, raw hashes, data card, causal scale/regime provenance, and real audits.
+3. `evaluation/reference-zero-shot-benchmark` — released checkpoint, all baselines, registered audited folds, fixed final holdout, immutable report pack, and decision.
 
 ## Merge policy
 
