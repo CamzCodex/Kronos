@@ -66,13 +66,13 @@ Status date: 2026-07-22
 
 - gap_id: `GAP-005`
 - title: Evaluation contracts exist but source adapters and real execution are absent
-- description: PRs #16–#18 implement split/audit binding, all mandatory comparators, scoring, causal paper-cost accounting, cost sensitivity, paired fold aggregation, and final-score separation. The active phase adds audit revalidation, exact comparator/truth matching, test/final boundary enforcement, and immutable fold-result writes. No real source adapter, training-only scale/regime provenance, byte-verifying registry, or physical final-data isolation exists.
+- description: PRs #16–#19 implement split/audit binding, all mandatory comparators, scoring, causal paper-cost accounting, cost sensitivity, paired fold aggregation, final-score separation, audit revalidation, exact comparator/truth matching, boundary enforcement, and immutable fold results. The active registry phase adds content-addressed byte verification and reconstruction. No real source adapter, training-only scale/regime provenance, attested launcher, or physical final-data isolation exists.
 - severity: Critical
 - impact: The central mission question cannot be answered.
 - evidence: `kronos_eval/walk_forward.py`, `baselines.py`, `metrics.py`, `costs.py`, `aggregation.py`, `runner.py`, their regression tests, protocol documents, and Phase 5A–5D adversarial reviews.
 - owner: Unassigned
 - status: Partially resolved — real execution remains a promotion blocker
-- required work: Source-specific forecast/baseline/scale/regime adapters, artifact-verifying registry, feature-matched comparators, factor exposure source, verified real fold audits, physical final-holdout enforcement, evaluation CI smoke
+- required work: Source-specific forecast/baseline/scale/regime adapters, attested registry launcher capture, feature-matched comparators, factor exposure source, verified real fold audits, physical final-holdout enforcement, evaluation CI smoke
 - blocking decision: Model usefulness and fine-tuning gate
 - related PR: `#16`, `#17`, `#18`, and this phase's pull request
 - related experiment: None
@@ -135,4 +135,19 @@ Status date: 2026-07-22
 - required work: Make a focused packaging-metadata PR, verify published metadata, sdist, wheel, and supported Python imports.
 - blocking decision: None for research evaluation; blocks future packaging-readiness claim after the enforcement date.
 - related PR: None
+- related experiment: None
+
+## GAP-010 — Registry metadata and approvals are not independently attested
+
+- gap_id: `GAP-010`
+- title: Local lineage proves registered bytes but trusts launcher and reviewer declarations
+- description: The Phase 7 registry verifies content hashes, deterministic experiment identity, reconstruction, immutable record/alias history, and promotion-alias policy. Git/dirty state, hardware, libraries, source semantics, and approval references are still supplied by the caller; approval authority is not signed or resolved.
+- severity: High
+- impact: A caller could accurately register misleading metadata or self-declare approval, producing mechanically complete but scientifically invalid evidence.
+- evidence: `kronos_eval/registry.py`, `docs/reviews/ADVERSARIAL_REVIEW_PHASE_7.md`, and synthetic registry regressions.
+- owner: Unassigned
+- status: Open — model-promotion blocker
+- required work: Capture Git/environment state in the executable launcher, bind passed audit/result artifacts automatically, resolve approval evidence to repository records, serialize concurrent writers, and define signed or repository-governed promotion authority before production use.
+- blocking decision: Model promotion and production-readiness classification
+- related PR: This phase's pull request
 - related experiment: None

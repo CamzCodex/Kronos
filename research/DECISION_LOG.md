@@ -155,3 +155,16 @@
 - reversal trigger: A versioned runner/registry protocol that provides stronger source authentication, artifact verification, comparator completeness, and final isolation with compatibility evidence.
 - related commit: Introduced by `evaluation/audit-gated-runner`
 - related PR: This phase's pull request
+
+## DEC-013 — Experiment artifacts are content-addressed and model aliases are governed
+
+- decision_id: `DEC-013`
+- date: 2026-07-22
+- decision: Register experiments as immutable canonical records whose declared files are copied and SHA-256 verified in content-addressed storage; reconstruct and reverify every artifact by experiment ID; retain every model-alias movement as an immutable event; and restrict champion/rollback aliases to approved, clean-tree, artifact-verified records with approval references.
+- alternatives: Store only paths or caller-declared hashes; overwrite experiment JSON; use mutable aliases without history; introduce a hosted MLflow service immediately.
+- evidence: `kronos_eval/registry.py`, registry regression tests, the registry specification, and the Phase 7 adversarial review.
+- reasoning: Decision evidence must survive source-file deletion and detect later byte or metadata changes. A lightweight local implementation closes that integrity gap without adding a service before a real benchmark justifies it.
+- risks: Caller metadata and approval authority are not independently attested; local storage is not signed or WORM; alias writers are not cross-process locked; exact bytes can still encode causally invalid data.
+- reversal trigger: A versioned registry or MLflow-compatible backend that preserves content verification, immutable history, reconstructability, and stricter attestation with migration tests.
+- related commit: Introduced by `registry/experiment-and-model-lineage`
+- related PR: This phase's pull request

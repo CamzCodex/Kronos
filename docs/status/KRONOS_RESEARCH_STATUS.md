@@ -1,7 +1,7 @@
 # Kronos research status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `231b8e686ee936fda43e2b12f569f17cedf569f8`
+Evidence baseline: `master` at `1b5000cf22247ae28de7e4e04cb6fdba5f854f4d`
 
 ## Decision
 
@@ -35,7 +35,8 @@ These are software and checkpoint-reproducibility results. They are not independ
 - deterministic expanding/rolling split planning, exact purge/embargo and fixed-holdout records, and identity-bound leakage-audit attachment merged in PR #16.
 - eleven frozen, identity-bound forecast baselines receiving the same validated OHLCVA information set, merged in PR #17. Their deterministic or seeded output correctness has been tested, but no comparative market metric has been calculated.
 - common point, direction, ranking, probabilistic, regime, paper-cost, exposure, cost-sensitivity, paired bootstrap, and final-isolation calculations merged in PR #18. Only synthetic formula and failure-mode fixtures have been evaluated.
-- a complete-suite, passed-audit-only development runner with truth matching, test/final boundary refusal, optional downstream cost binding, and immutable JSON results on the active phase branch. Its tests use synthetic audits and forecasts only.
+- a complete-suite, passed-audit-only development runner with truth matching, test/final boundary refusal, optional downstream cost binding, and immutable JSON results merged in PR #19. Its tests use synthetic audits and forecasts only.
+- a content-addressed local experiment/model registry with exact-byte reconstruction, immutable records and alias history, and mechanically gated aliases on the active phase branch. Its tests use synthetic files and metadata only.
 
 Engineering completion must not be reported as financial validation.
 
@@ -52,7 +53,7 @@ Engineering completion must not be reported as financial validation.
 - conservative spread, commission, slippage, liquidity, turnover, and market-impact sensitivity;
 - bootstrap uncertainty and parameter perturbation;
 - whether Kronos adds information beyond price persistence, smoothing, momentum, or mean reversion;
-- reproducible experiment/model lineage and model promotion aliases;
+- independently attested launcher capture and any real registered experiment/model lineage;
 - any paper-trading portfolio, risk, execution, or monitoring control.
 
 ## Known data limitations
