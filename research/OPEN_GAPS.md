@@ -47,19 +47,19 @@ Status date: 2026-07-22
 - related PR: None
 - related experiment: None
 
-## GAP-004 — Mean-only forecast API
+## GAP-004 — Probabilistic forecast calibration and integration
 
 - gap_id: `GAP-004`
-- title: Raw probabilistic forecast paths and validity accounting absent
-- description: The predictor averages sampled paths and lacks typed provenance, quantiles, tail statistics, explicit generators, raw/projected distinction, and repair reporting.
+- title: Typed raw paths exist but calibration and evaluation integration are absent
+- description: The phase branch adds raw samples, typed provenance, quantiles, return distributions, isolated generators, raw/projected distinction, and repair reporting while retaining the legacy mean-only wrapper. No out-of-sample run has established calibration, invalid-path behavior, or incremental information.
 - severity: High
 - impact: Calibration cannot be evaluated and invalid generated candles may be hidden or discarded inconsistently.
-- evidence: `model/kronos.py` predictor interface at the evidence baseline.
+- evidence: `model/forecast.py`, `docs/inference/PROBABILISTIC_FORECAST_API.md`, and the Phase 4 adversarial review.
 - owner: Unassigned
-- status: Open
-- required work: `inference/probabilistic-forecast-api`
+- status: Partially resolved — phase CI, checkpoint regression, and evaluation integration remain blockers
+- required work: Pass all phase gates; bind verified registry provenance; evaluate calibration and repair sensitivity on every walk-forward fold.
 - blocking decision: Probabilistic benchmark
-- related PR: None
+- related PR: This phase's pull request
 - related experiment: None
 
 ## GAP-005 — No walk-forward and baseline engine

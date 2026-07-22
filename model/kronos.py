@@ -370,7 +370,14 @@ def top_k_top_p_filtering(
     return logits
 
 
-def sample_from_logits(logits, temperature=1.0, top_k=None, top_p=None, sample_logits=True):
+def sample_from_logits(
+        logits,
+        temperature=1.0,
+        top_k=None,
+        top_p=None,
+        sample_logits=True,
+        generator=None,
+):
     logits = logits / temperature
     if (top_k is not None and top_k > 0) or (top_p is not None and top_p < 1.0):
         logits = top_k_top_p_filtering(logits, top_k=top_k or 0, top_p=top_p or 1.0)
@@ -380,12 +387,29 @@ def sample_from_logits(logits, temperature=1.0, top_k=None, top_p=None, sample_l
     if not sample_logits:
         _, x = torch.topk(probs, k=1, dim=-1)
     else:
-        x = torch.multinomial(probs, num_samples=1)
+        x = torch.multinomial(probs, num_samples=1, generator=generator)
 
     return x
 
 
-def auto_regressive_inference(tokenizer, model, x, x_stamp, y_stamp, max_context, pred_len, clip=5, T=1.0, top_k=0, top_p=0.99, sample_count=5, verbose=False):
+def auto_regressive_inference(
+        tokenizer,
+        model,
+        x,
+        x_stamp,
+        y_stamp,
+        max_context,
+        pred_len,
+        clip=5,
+        T=1.0,
+        top_k=0,
+        top_p=0.99,
+        sample_count=5,
+        verbose=False,
+        return_samples=False,
+        deterministic=False,
+        generator=None,
+):
     with torch.no_grad():
         x = torch.clip(x, -clip, clip)
 
@@ -434,11 +458,25 @@ def auto_regressive_inference(tokenizer, model, x, x_stamp, y_stamp, max_context
 
             s1_logits, context = model.decode_s1(input_tokens[0], input_tokens[1], current_stamp)
             s1_logits = s1_logits[:, -1, :]
-            sample_pre = sample_from_logits(s1_logits, temperature=T, top_k=top_k, top_p=top_p, sample_logits=True)
+            sample_pre = sample_from_logits(
+                s1_logits,
+                temperature=T,
+                top_k=top_k,
+                top_p=top_p,
+                sample_logits=not deterministic,
+                generator=generator,
+            )
 
             s2_logits = model.decode_s2(context, sample_pre)
             s2_logits = s2_logits[:, -1, :]
-            sample_post = sample_from_logits(s2_logits, temperature=T, top_k=top_k, top_p=top_p, sample_logits=True)
+            sample_post = sample_from_logits(
+                s2_logits,
+                temperature=T,
+                top_k=top_k,
+                top_p=top_p,
+                sample_logits=not deterministic,
+                generator=generator,
+            )
 
             generated_pre[:, i] = sample_pre.squeeze(-1)
             generated_post[:, i] = sample_post.squeeze(-1)
@@ -462,8 +500,12 @@ def auto_regressive_inference(tokenizer, model, x, x_stamp, y_stamp, max_context
         ]
         z = tokenizer.decode(input_tokens, half=True)
         z = z.reshape(-1, sample_count, z.size(1), z.size(2))
-        preds = z.cpu().numpy()
-        preds = np.mean(preds, axis=1)
+        sample_paths = z.cpu().numpy()
+
+        if return_samples:
+            return sample_paths
+
+        preds = np.mean(sample_paths, axis=1)
 
         return preds
 
@@ -480,7 +522,18 @@ def calc_time_stamps(x_timestamp):
 
 class KronosPredictor:
 
-    def __init__(self, model, tokenizer, device=None, max_context=512, clip=5):
+    def __init__(
+            self,
+            model,
+            tokenizer,
+            device=None,
+            max_context=512,
+            clip=5,
+            model_version="Unknown",
+            model_revision="Unknown",
+            tokenizer_revision="Unknown",
+            code_commit="Unknown",
+    ):
         self.tokenizer = tokenizer
         self.model = model
         self.max_context = max_context
@@ -489,6 +542,10 @@ class KronosPredictor:
         self.vol_col = 'volume'
         self.amt_vol = 'amount'
         self.time_cols = ['minute', 'hour', 'weekday', 'day', 'month']
+        self.model_version = model_version
+        self.model_revision = model_revision
+        self.tokenizer_revision = tokenizer_revision
+        self.code_commit = code_commit
         
         # Auto-detect device if not specified
         if device is None:
@@ -514,6 +571,53 @@ class KronosPredictor:
                                           self.clip, T, top_k, top_p, sample_count, verbose)
         preds = preds[:, -pred_len:, :]
         return preds
+
+    def generate_sample_paths(
+            self,
+            x,
+            x_stamp,
+            y_stamp,
+            pred_len,
+            T,
+            top_k,
+            top_p,
+            sample_count,
+            verbose,
+            deterministic=False,
+            generator=None,
+    ):
+        """Generate unaggregated paths without changing legacy ``generate`` semantics."""
+
+        x_tensor = torch.from_numpy(np.array(x).astype(np.float32)).to(self.device)
+        x_stamp_tensor = torch.from_numpy(np.array(x_stamp).astype(np.float32)).to(self.device)
+        y_stamp_tensor = torch.from_numpy(np.array(y_stamp).astype(np.float32)).to(self.device)
+
+        sample_paths = auto_regressive_inference(
+            self.tokenizer,
+            self.model,
+            x_tensor,
+            x_stamp_tensor,
+            y_stamp_tensor,
+            self.max_context,
+            pred_len,
+            self.clip,
+            T,
+            top_k,
+            top_p,
+            sample_count,
+            verbose,
+            return_samples=True,
+            deterministic=deterministic,
+            generator=generator,
+        )
+        return sample_paths[:, :, -pred_len:, :]
+
+    def forecast(self, request):
+        """Return a typed probabilistic forecast while preserving ``predict``."""
+
+        from model.forecast import forecast_with_predictor
+
+        return forecast_with_predictor(self, request)
 
     def predict(self, df, x_timestamp, y_timestamp, pred_len, T=1.0, top_k=0, top_p=0.9, sample_count=1, verbose=True):
 
@@ -658,4 +762,3 @@ class KronosPredictor:
             pred_dfs.append(pred_df)
 
         return pred_dfs
-

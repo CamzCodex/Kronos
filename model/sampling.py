@@ -126,6 +126,7 @@ def sample_from_logits(
     top_k: int | None = None,
     top_p: float | None = None,
     sample_logits: bool = True,
+    generator: torch.Generator | None = None,
 ) -> torch.Tensor:
     """Select one token per logits row with validated sampling controls."""
 
@@ -137,6 +138,8 @@ def sample_from_logits(
         raise ValueError("temperature must be finite and greater than 0")
     if not isinstance(sample_logits, bool):
         raise TypeError("sample_logits must be a boolean")
+    if generator is not None and not isinstance(generator, torch.Generator):
+        raise TypeError("generator must be a torch.Generator or None")
 
     normalized_top_k = 0 if top_k is None else _validate_top_k(top_k)
     normalized_top_p = 1.0 if top_p is None else _validate_top_p(top_p)
@@ -154,5 +157,9 @@ def sample_from_logits(
         raise ValueError("sampling probabilities are not finite")
 
     if sample_logits:
-        return torch.multinomial(probabilities, num_samples=1)
+        return torch.multinomial(
+            probabilities,
+            num_samples=1,
+            generator=generator,
+        )
     return torch.argmax(probabilities, dim=-1, keepdim=True)
