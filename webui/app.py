@@ -1,15 +1,16 @@
-import os
-import pandas as pd
-import numpy as np
+import datetime
 import json
+import logging
+import os
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 import plotly.utils
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
-import sys
-import warnings
-import datetime
-warnings.filterwarnings('ignore')
+from flask import Flask, jsonify, render_template, request
+from werkzeug.exceptions import RequestEntityTooLarge
 
 # Add project root directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,10 +20,87 @@ try:
     MODEL_AVAILABLE = True
 except ImportError:
     MODEL_AVAILABLE = False
-    print("Warning: Kronos model cannot be imported, will use simulated data for demonstration")
+    print("Warning: Kronos model cannot be imported")
+
+if __package__:
+    from .security import (
+        RequestValidationError,
+        bounded_float,
+        bounded_int,
+        require_json_object,
+        resolve_data_file,
+        validate_device,
+        validate_optional_start_date,
+    )
+else:  # Direct execution from the webui directory.
+    from security import (
+        RequestValidationError,
+        bounded_float,
+        bounded_int,
+        require_json_object,
+        resolve_data_file,
+        validate_device,
+        validate_optional_start_date,
+    )
 
 app = Flask(__name__)
-CORS(app)
+app.config.update(
+    MAX_CONTENT_LENGTH=64 * 1024,
+    TRUSTED_HOSTS=["localhost", "127.0.0.1", "[::1]"],
+)
+app.logger.setLevel(logging.INFO)
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = PROJECT_ROOT / "data"
+RESULTS_DIR = Path(__file__).resolve().parent / "prediction_results"
+MAX_DATA_FILE_BYTES = 64 * 1024 * 1024
+MAX_DATA_ROWS = 250_000
+LOCAL_ORIGINS = {"http://localhost:7070", "http://127.0.0.1:7070"}
+
+
+def _request_json():
+    if not request.is_json:
+        raise RequestValidationError("Request body must use application/json")
+    return require_json_object(request.get_json(silent=True))
+
+
+@app.before_request
+def enforce_local_origin():
+    if request.path.startswith("/api/") and request.method not in {"GET", "HEAD", "OPTIONS"}:
+        origin = request.headers.get("Origin")
+        if origin and origin not in LOCAL_ORIGINS:
+            return jsonify({"error": "Cross-origin API requests are not allowed"}), 403
+    return None
+
+
+@app.after_request
+def set_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.plot.ly https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "frame-ancestors 'none'"
+    )
+    if request.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.errorhandler(RequestValidationError)
+def handle_request_validation(error):
+    return jsonify({"error": str(error)}), 400
+
+
+@app.errorhandler(413)
+def handle_request_too_large(_error):
+    return jsonify({"error": "Request body exceeds the local size limit"}), 413
 
 # Global variables to store models
 tokenizer = None
@@ -59,85 +137,117 @@ AVAILABLE_MODELS = {
 
 def load_data_files():
     """Scan data directory and return available data files"""
-    data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
     data_files = []
     
-    if os.path.exists(data_dir):
-        for file in os.listdir(data_dir):
-            if file.endswith(('.csv', '.feather')):
-                file_path = os.path.join(data_dir, file)
-                file_size = os.path.getsize(file_path)
-                data_files.append({
-                    'name': file,
-                    'path': file_path,
-                    'size': f"{file_size / 1024:.1f} KB" if file_size < 1024*1024 else f"{file_size / (1024*1024):.1f} MB"
-                })
+    if DATA_DIR.is_dir():
+        for entry in sorted(DATA_DIR.iterdir(), key=lambda path: path.name):
+            try:
+                file_path = resolve_data_file(DATA_DIR, entry.name, MAX_DATA_FILE_BYTES)
+            except RequestValidationError:
+                continue
+            file_size = file_path.stat().st_size
+            data_files.append({
+                'name': entry.name,
+                'path': entry.name,
+                'size': f"{file_size / 1024:.1f} KB" if file_size < 1024*1024 else f"{file_size / (1024*1024):.1f} MB"
+            })
     
     return data_files
 
 def load_data_file(file_path):
-    """Load data file"""
+    """Load one strictly validated local market-data file."""
     try:
-        if file_path.endswith('.csv'):
+        file_path = resolve_data_file(DATA_DIR, file_path, MAX_DATA_FILE_BYTES)
+        if file_path.suffix.lower() == '.csv':
             df = pd.read_csv(file_path)
-        elif file_path.endswith('.feather'):
-            df = pd.read_feather(file_path)
         else:
             return None, "Unsupported file format"
+
+        if df.empty:
+            return None, "Selected data file contains no rows"
+        if len(df) > MAX_DATA_ROWS:
+            return None, "Selected data file exceeds the local row limit"
         
         # Check required columns
         required_cols = ['open', 'high', 'low', 'close']
         if not all(col in df.columns for col in required_cols):
             return None, f"Missing required columns: {required_cols}"
         
-        # Process timestamp column
-        if 'timestamps' in df.columns:
-            df['timestamps'] = pd.to_datetime(df['timestamps'])
-        elif 'timestamp' in df.columns:
-            df['timestamps'] = pd.to_datetime(df['timestamp'])
-        elif 'date' in df.columns:
-            # If column name is 'date', rename it to 'timestamps'
-            df['timestamps'] = pd.to_datetime(df['date'])
-        else:
-            # If no timestamp column exists, create one
-            df['timestamps'] = pd.date_range(start='2024-01-01', periods=len(df), freq='1H')
-        
-        # Ensure numeric columns are numeric type
-        for col in ['open', 'high', 'low', 'close']:
+        timestamp_cols = [
+            column for column in ('timestamps', 'timestamp', 'date')
+            if column in df.columns
+        ]
+        if not timestamp_cols:
+            return None, "Missing required timestamp column"
+        if len(timestamp_cols) > 1:
+            return None, "Multiple timestamp columns are ambiguous"
+        timestamps = pd.to_datetime(
+            df[timestamp_cols[0]],
+            errors='coerce',
+            utc=True,
+        )
+        if timestamps.isna().any():
+            return None, "Timestamp column contains invalid values"
+        if timestamps.duplicated().any():
+            return None, "Timestamp column contains duplicates"
+        if not timestamps.is_monotonic_increasing:
+            return None, "Timestamp column must be strictly increasing"
+        df['timestamps'] = timestamps
+
+        numeric_cols = ['open', 'high', 'low', 'close']
+        for col in numeric_cols:
             df[col] = pd.to_numeric(df[col], errors='coerce')
         
         # Process volume column (optional)
         if 'volume' in df.columns:
             df['volume'] = pd.to_numeric(df['volume'], errors='coerce')
+            numeric_cols.append('volume')
         
         # Process amount column (optional, but not used for prediction)
         if 'amount' in df.columns:
             df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
-        
-        # Remove rows containing NaN values
-        df = df.dropna()
+            numeric_cols.append('amount')
+
+        numeric_values = df[numeric_cols].to_numpy(dtype=float)
+        if not np.isfinite(numeric_values).all():
+            return None, "Market data contains missing or non-finite numeric values"
+
+        prices = df[['open', 'high', 'low', 'close']]
+        if (prices <= 0).to_numpy().any():
+            return None, "Market prices must be positive"
+        invalid_candle = (
+            (df['high'] < df[['open', 'close', 'low']].max(axis=1))
+            | (df['low'] > df[['open', 'close', 'high']].min(axis=1))
+        )
+        if invalid_candle.any():
+            return None, "Market data contains invalid OHLC relationships"
+        for activity_col in ('volume', 'amount'):
+            if activity_col in df.columns and (df[activity_col] < 0).any():
+                return None, f"{activity_col} must be non-negative"
         
         return df, None
         
-    except Exception as e:
-        return None, f"Failed to load file: {str(e)}"
+    except RequestValidationError as exc:
+        return None, str(exc)
+    except Exception:
+        app.logger.exception("Unable to load selected data file")
+        return None, "Unable to load selected data file"
 
 def save_prediction_results(file_path, prediction_type, prediction_results, actual_data, input_data, prediction_params):
     """Save prediction results to file"""
     try:
         # Create prediction results directory
-        results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'prediction_results')
-        os.makedirs(results_dir, exist_ok=True)
+        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
         
         # Generate filename
-        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.datetime.now(datetime.UTC).strftime('%Y%m%d_%H%M%S_%f')
         filename = f'prediction_{timestamp}.json'
-        filepath = os.path.join(results_dir, filename)
+        filepath = RESULTS_DIR / filename
         
         # Prepare data for saving
         save_data = {
-            'timestamp': datetime.datetime.now().isoformat(),
-            'file_path': file_path,
+            'timestamp': datetime.datetime.now(datetime.UTC).isoformat(),
+            'file_path': Path(file_path).name,
             'prediction_type': prediction_type,
             'prediction_params': prediction_params,
             'input_data_summary': {
@@ -196,14 +306,14 @@ def save_prediction_results(file_path, prediction_type, prediction_results, actu
                 }
         
         # Save to file
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with filepath.open('x', encoding='utf-8') as f:
             json.dump(save_data, f, indent=2, ensure_ascii=False)
         
         print(f"Prediction results saved to: {filepath}")
         return filepath
         
-    except Exception as e:
-        print(f"Failed to save prediction results: {e}")
+    except Exception:
+        app.logger.exception("Failed to save prediction results")
         return None
 
 def create_prediction_chart(df, pred_df, lookback, pred_len, actual_df=None, historical_start_idx=0):
@@ -342,7 +452,7 @@ def get_data_files():
 def load_data():
     """Load data file"""
     try:
-        data = request.get_json()
+        data = _request_json()
         file_path = data.get('file_path')
         
         if not file_path:
@@ -398,22 +508,31 @@ def load_data():
             'message': f'Successfully loaded data, total {len(df)} rows'
         })
         
-    except Exception as e:
-        return jsonify({'error': f'Failed to load data: {str(e)}'}), 500
+    except (RequestValidationError, RequestEntityTooLarge):
+        raise
+    except Exception:
+        app.logger.exception("Failed to process load-data request")
+        return jsonify({'error': 'Failed to load selected data'}), 500
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
     """Perform prediction"""
     try:
-        data = request.get_json()
+        data = _request_json()
         file_path = data.get('file_path')
-        lookback = int(data.get('lookback', 400))
-        pred_len = int(data.get('pred_len', 120))
+        lookback = bounded_int(data, 'lookback', 400, 1, 2048)
+        pred_len = bounded_int(data, 'pred_len', 120, 1, 512)
         
         # Get prediction quality parameters
-        temperature = float(data.get('temperature', 1.0))
-        top_p = float(data.get('top_p', 0.9))
-        sample_count = int(data.get('sample_count', 1))
+        temperature = bounded_float(data, 'temperature', 1.0, 0.1, 2.0)
+        top_p = bounded_float(data, 'top_p', 0.9, 0.1, 1.0)
+        sample_count = bounded_int(data, 'sample_count', 1, 1, 5)
+        start_date = validate_optional_start_date(data.get('start_date'))
+        if start_date:
+            try:
+                pd.to_datetime(start_date, utc=True)
+            except (TypeError, ValueError) as exc:
+                raise RequestValidationError("Invalid start_date") from exc
         
         if not file_path:
             return jsonify({'error': 'File path cannot be empty'}), 400
@@ -423,8 +542,10 @@ def predict():
         if error:
             return jsonify({'error': error}), 400
         
-        if len(df) < lookback:
-            return jsonify({'error': f'Insufficient data length, need at least {lookback} rows'}), 400
+        if len(df) < lookback + pred_len:
+            return jsonify({
+                'error': f'Insufficient data length, need at least {lookback + pred_len} rows'
+            }), 400
         
         # Perform prediction
         if MODEL_AVAILABLE and predictor is not None:
@@ -436,11 +557,9 @@ def predict():
                     required_cols.append('volume')
                 
                 # Process time period selection
-                start_date = data.get('start_date')
-                
                 if start_date:
                     # Custom time period - fix logic: use data within selected window
-                    start_dt = pd.to_datetime(start_date)
+                    start_dt = pd.to_datetime(start_date, utc=True)
                     
                     # Find data after start time
                     mask = df['timestamps'] >= start_dt
@@ -486,8 +605,9 @@ def predict():
                     sample_count=sample_count
                 )
                 
-            except Exception as e:
-                return jsonify({'error': f'Kronos model prediction failed: {str(e)}'}), 500
+            except Exception:
+                app.logger.exception("Kronos model prediction failed")
+                return jsonify({'error': 'Kronos model prediction failed'}), 500
         else:
             return jsonify({'error': 'Kronos model not loaded, please load model first'}), 400
         
@@ -499,7 +619,7 @@ def predict():
             # Fix logic: use data within selected window
             # Prediction uses first 400 data points within selected window
             # Actual data should be last 120 data points within selected window
-            start_dt = pd.to_datetime(start_date)
+            start_dt = pd.to_datetime(start_date, utc=True)
             
             # Find data starting from start_date
             mask = df['timestamps'] >= start_dt
@@ -538,7 +658,7 @@ def predict():
         # Create chart - pass historical data start position
         if start_date:
             # Custom time period: find starting position of historical data in original df
-            start_dt = pd.to_datetime(start_date)
+            start_dt = pd.to_datetime(start_date, utc=True)
             mask = df['timestamps'] >= start_dt
             historical_start_idx = df[mask].index[0] if len(df[mask]) > 0 else 0
         else:
@@ -551,7 +671,7 @@ def predict():
         if 'timestamps' in df.columns:
             if start_date:
                 # Custom time period: use selected window data to calculate timestamps
-                start_dt = pd.to_datetime(start_date)
+                start_dt = pd.to_datetime(start_date, utc=True)
                 mask = df['timestamps'] >= start_dt
                 time_range_df = df[mask]
                 
@@ -607,8 +727,8 @@ def predict():
                     'start_date': start_date if start_date else 'latest'
                 }
             )
-        except Exception as e:
-            print(f"Failed to save prediction results: {e}")
+        except Exception:
+            app.logger.exception("Failed to save prediction results")
         
         return jsonify({
             'success': True,
@@ -620,8 +740,11 @@ def predict():
             'message': f'Prediction completed, generated {pred_len} prediction points' + (f', including {len(actual_data)} actual data points for comparison' if len(actual_data) > 0 else '')
         })
         
-    except Exception as e:
-        return jsonify({'error': f'Prediction failed: {str(e)}'}), 500
+    except (RequestValidationError, RequestEntityTooLarge):
+        raise
+    except Exception:
+        app.logger.exception("Prediction request failed")
+        return jsonify({'error': 'Prediction failed'}), 500
 
 @app.route('/api/load-model', methods=['POST'])
 def load_model():
@@ -632,9 +755,9 @@ def load_model():
         if not MODEL_AVAILABLE:
             return jsonify({'error': 'Kronos model library not available'}), 400
         
-        data = request.get_json()
+        data = _request_json()
         model_key = data.get('model_key', 'kronos-small')
-        device = data.get('device', 'cpu')
+        device = validate_device(data.get('device', 'cpu'))
         
         if model_key not in AVAILABLE_MODELS:
             return jsonify({'error': f'Unsupported model: {model_key}'}), 400
@@ -659,8 +782,11 @@ def load_model():
             }
         })
         
-    except Exception as e:
-        return jsonify({'error': f'Model loading failed: {str(e)}'}), 500
+    except (RequestValidationError, RequestEntityTooLarge):
+        raise
+    except Exception:
+        app.logger.exception("Model loading failed")
+        return jsonify({'error': 'Model loading failed'}), 500
 
 @app.route('/api/available-models')
 def get_available_models():
@@ -703,6 +829,6 @@ if __name__ == '__main__':
     if MODEL_AVAILABLE:
         print("Tip: You can load Kronos model through /api/load-model endpoint")
     else:
-        print("Tip: Will use simulated data for demonstration")
+        print("Tip: Install the project model dependencies before loading a checkpoint")
     
-    app.run(debug=True, host='0.0.0.0', port=7070)
+    app.run(debug=False, use_reloader=False, host='127.0.0.1', port=7070, threaded=False)

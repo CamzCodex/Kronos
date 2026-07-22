@@ -59,6 +59,9 @@ Desktop.ini
 *.log
 logs/
 
+# Local Web UI output
+webui/prediction_results/
+
 # Environment
 .env
 .venv

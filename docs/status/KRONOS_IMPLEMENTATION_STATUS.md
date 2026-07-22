@@ -1,21 +1,21 @@
 # Kronos implementation status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `ea66c2ae6cb9231f539407bd0bbdfcd532fdb876`
+Evidence baseline: `master` at `60914d567cc5407ab7edfdb38aab9abb75adbdaa` plus the Web UI security phase
 Operating mode: research and paper simulation only; no broker execution
 
 ## Executive status
 
-Kronos has a materially stronger engineering foundation than the upstream demo, but it does not yet contain the real evidence required to determine whether the model adds economically useful information. Storage, sampling, packaging, selected model primitives, pinned-checkpoint numerical regression, canonical data and leakage contracts, typed probabilistic forecasts, walk-forward planning, eleven mandatory baselines, scoring/cost/aggregation, the audit-gated runner, byte-verified experiment lineage, and a fail-closed reference-source evidence gate are merged. No reviewed provider has complete licensing, snapshot, calendar, adjustment, point-in-time universe, and delisting evidence, so real source adapters, audits, and the zero-shot benchmark remain blocked.
+Kronos has a materially stronger engineering foundation than the upstream demo, but it does not yet contain the real evidence required to determine whether the model adds economically useful information. Storage, sampling, packaging, selected model primitives, pinned-checkpoint numerical regression, canonical data and leakage contracts, typed probabilistic forecasts, walk-forward planning, eleven mandatory baselines, scoring/cost/aggregation, the audit-gated runner, byte-verified experiment lineage, a fail-closed reference-source evidence gate, required quality/security CI, and a local-only Web UI boundary are implemented. No reviewed provider has complete licensing, snapshot, calendar, adjustment, point-in-time universe, and delisting evidence, so real source adapters, audits, and the zero-shot benchmark remain blocked.
 
 Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VALIDATED**.
 
 ## Reconciled repository state
 
 - Default branch: `master`.
-- Current master SHA at phase closeout: `ea66c2ae6cb9231f539407bd0bbdfcd532fdb876`.
-- Open pull requests at phase closeout: none after PR #21 merged.
-- Most recent merge at phase closeout: PR #21, decision-grade reference source gate.
+- Current master SHA at Web UI phase start: `60914d567cc5407ab7edfdb38aab9abb75adbdaa`.
+- Most recent merge at phase start: PR #23, required quality and security gates.
+- The Web UI security branch is intentionally limited to the bundled local demonstration boundary; its merge evidence is recorded in the phase PR.
 - The mission's previously expected SHA, `af9c4bb0d1c6d4883e1d9ea28a83632c1c6eb978`, was correct before PR #11.
 - The repository has no release tag or declared production deployment.
 
@@ -40,12 +40,16 @@ Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VAL
 | Passed-audit-only complete comparator execution, test/final boundary enforcement, truth matching and immutable fold results | PR #19; `kronos_eval/runner.py` | Merged; no real inputs or result |
 | Byte-verified content-addressed experiment records, reconstruction, immutable alias history and promotion policy | PR #20; `kronos_eval/registry.py` | Merged; no real experiment registered |
 | Fail-closed source licensing/access/snapshot/calendar/adjustment/universe/delisting/reproducibility gate | PR #21; `kronos_data/source_gate.py` | Merged; no source approved |
+| Pinned Ruff/Mypy/dependency/secret/archive/leakage/evaluation merge controls | PR #23; `.github/workflows/quality-security.yml` | Active on branch pushes; branch-protection settings remain unverified |
+| Local-only Web UI trust boundary, strict input refusal, and route regressions | `webui/security.py`; `tests/webui/test_security.py`; Web UI adversarial review | Complete for deliberate single-user loopback use; every remote deployment remains blocked |
 
 ## Branch reconciliation
 
 ### Current development branches
 
-No implementation branch is active at closeout. The next source-adapter branch is blocked pending a complete licensed data evidence package or separately authorized paid-source evaluation.
+- `security/webui-local-boundary` — bounded local demonstration boundary and adversarial regressions.
+
+The next source-adapter branch remains blocked pending a complete licensed data evidence package or acceptable provider terms.
 
 ### Retained historical branches
 
@@ -87,9 +91,10 @@ Branch deletion is not required for correctness and is deferred until repository
 4. **High — probabilistic interface not yet empirically calibrated:** PR #15 exposes typed raw samples, quantiles, return distributions, explicit randomness, and repair accounting while retaining legacy wrappers. No walk-forward evidence establishes calibration.
 5. **High — no real walk-forward execution:** PRs #16–#20 provide split, baseline, scoring, cost, aggregation, audit-gated execution, immutable fold results, and byte-verified local lineage. Source adapters, training-only scale/regime provenance, attested launcher capture, factor exposure, physical final isolation, and real runs remain absent.
 6. **High — no evidence-grade benchmark:** no repository artifact demonstrates incremental forecasting or economic value over a naive baseline.
-7. **Medium — incomplete CI controls:** Ruff is configured but not a required workflow; static type checks, dependency vulnerability scanning, secret scanning, explicit leakage smoke, and evaluation smoke are absent.
-8. **Medium — training runner limitations:** current training scripts assume DDP-oriented execution and do not provide the required single-process CPU/GPU debug, resume, immutable lineage, and promotion controls.
-9. **Medium — checkpoint history uncertainty:** regression tests pin exact Hugging Face revisions, but the relationship between released checkpoint training data/preprocessing and later normalization fixes is undocumented.
+7. **Medium — incomplete CI enforcement/scope:** PR #23 provides green Ruff, maintained-surface Mypy, dependency, full-history secret, archive, leakage, and evaluation workflows. Branch-protection/GitHub-native settings are unverified, and legacy executables remain outside staged static analysis.
+8. **High — Web UI remote deployment remains prohibited:** local file, browser, validation, launcher, and error defaults are hardened, but authentication, TLS, rate limiting, multi-user isolation, workload quotas, production serving, and immutable interactive checkpoint revisions are absent.
+9. **Medium — training runner limitations:** current training scripts assume DDP-oriented execution and do not provide the required single-process CPU/GPU debug, resume, immutable lineage, and promotion controls.
+10. **Medium — checkpoint history uncertainty:** regression tests pin exact Hugging Face revisions, but the relationship between released checkpoint training data/preprocessing and later normalization fixes is undocumented.
 
 ## Current CI state
 
@@ -105,6 +110,10 @@ Branch deletion is not required for correctness and is deferred until repository
 - PR #19 offline run #107 and package smoke run #92: success on Python 3.10 and 3.12.
 - PR #20 offline run #110 and package smoke run #95: success on Python 3.10 and 3.12.
 - PR #21 offline run #112 and package smoke run #97: success on Python 3.10 and 3.12.
+- PR #23 quality/security run #4: Ruff/Mypy, two dependency audits, integrity smoke, and full-history Gitleaks success.
+- PR #23 offline run #119 and package smoke run #104: success on Python 3.10 and 3.12.
+- PR #23 released-checkpoint run #8: success at the pinned revisions.
+- Web UI phase local evidence: 37 focused security regressions, maintained-surface Ruff/Mypy, and earlier core/Web UI dependency audits passed; fresh isolated-audit bootstrap was blocked by the sandbox, so full GitHub matrices remain the merge authority.
 - PR #4 released-checkpoint regression: success at the pinned model and tokenizer revisions.
 - No failing required check was observed during reconciliation.
 - Absence of a workflow is not treated as a passing control.

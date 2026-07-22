@@ -194,3 +194,16 @@
 - reversal trigger: Expand the gate monotonically when legacy surfaces are repaired, or replace a tool only with a pinned, tested control that provides equal or stronger evidence.
 - related commit: Introduced by the quality/security gate branch
 - related PR: This phase's pull request
+
+## DEC-016 — The bundled Web UI is local-only
+
+- decision_id: `DEC-016`
+- date: 2026-07-22
+- decision: Permit the bundled Flask UI only as a single-user loopback research demonstration; fail closed on untrusted hosts/origins/files, malformed market rows, unbounded request controls, runtime installation, and internal error disclosure; prohibit every remote or production deployment until a separately reviewed access and workload design exists.
+- alternatives: Remove the UI; preserve its debugger/all-interface/CORS/path defaults; infer production readiness from dependency-audit success; add ad hoc remote exposure without authentication.
+- evidence: `webui/security.py`, hardened launchers/routes, 37 Web UI security regressions, dependency audits, generated-output removal/ignore controls, and the Web UI adversarial review.
+- reasoning: A small explicit local trust boundary preserves useful demonstration access while removing avoidable local-file, browser, debugger, and silent-data-repair risks. It does not pretend that a development server is an authenticated service.
+- risks: Local model execution remains resource-intensive; checkpoint IDs are not revision-pinned in the UI; external browser assets and inline template code remain; local result files are mutable; structural validation is not canonical data or leakage approval.
+- reversal trigger: A separately versioned remote-deployment architecture passes authentication, authorization, TLS, isolation, workload, serving, dependency, and security regression review without weakening the local defaults.
+- related commit: Introduced by `security/webui-local-boundary`
+- related PR: This phase's pull request

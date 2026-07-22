@@ -96,7 +96,7 @@ Status date: 2026-07-22
 
 - gap_id: `GAP-007`
 - title: Required quality and security gates need full repository enforcement
-- description: A focused workflow now covers Ruff, maintained-surface Mypy, dependency auditing, full-history secret scanning, and explicit archive/leakage/evaluation smoke tests. Legacy examples, `finetune_csv`, Web UI source, older model internals, branch-protection settings, and GitHub-native secret scanning are outside the proved scope.
+- description: PR #23 adds a focused workflow covering Ruff, maintained-surface Mypy, dependency auditing, full-history secret scanning, and explicit archive/leakage/evaluation smoke tests. The Web UI phase adds its security helper, launcher, and 37 route-level boundary regressions. Legacy examples, `finetune_csv`, the large Web UI route/rendering module, older model internals, branch-protection settings, and GitHub-native secret scanning remain outside the proved static-analysis scope.
 - severity: Medium
 - impact: Important classes of defects can merge without an automated gate.
 - evidence: `.github/workflows/quality-security.yml`, `requirements-quality.txt`, and `docs/operations/QUALITY_AND_SECURITY_GATES.md`.
@@ -104,7 +104,7 @@ Status date: 2026-07-22
 - status: Partially resolved — focused automated gates implemented; full legacy coverage and repository-setting enforcement remain open
 - required work: Require all green workflow jobs in branch protection, confirm GitHub-native secret scanning where available, and bring remaining executable surfaces under staged Ruff, type, and security review.
 - blocking decision: Production-readiness classification
-- related PR: Quality/security gate PR for this phase
+- related PR: `#23` and the Web UI security PR
 - related experiment: None
 
 ## GAP-008 — Released-checkpoint preprocessing provenance
@@ -156,13 +156,13 @@ Status date: 2026-07-22
 
 - gap_id: `GAP-011`
 - title: Bundled Flask UI retains a non-production trust boundary
-- description: The Web UI starts the Flask debugger on all interfaces, enables unrestricted CORS, accepts a client-supplied filesystem path, returns internal exception text, and can install dependencies at runtime. Dependency pins with eight published findings were upgraded in the quality/security phase, but application-level controls remain absent.
+- description: The Web UI is now constrained to deliberate single-user loopback use: no debugger/reloader, fixed `127.0.0.1` binding, trusted hosts, no CORS, local data-directory identifiers, symlink/traversal refusal, bounded requests/files/rows/parameters/devices, sanitized errors, strict market-input refusal, no runtime installation, security headers, and pinned browser assets with SRI. It still has no authentication, TLS, rate limiting, user isolation, workload sandbox, production WSGI server, or remotely deployable trust model.
 - severity: High
-- impact: Exposing the current UI beyond a trusted local machine could enable local-file disclosure, cross-origin invocation, debugger abuse, resource exhaustion, and sensitive error leakage.
-- evidence: `webui/app.py`, `webui/run.py`, `webui/start.sh`, and the pre-upgrade `pip-audit` result for Flask 2.3.3 and Flask-CORS 4.0.0.
+- impact: The former high-risk local defaults are removed, but publishing the UI could still permit unauthorized model use, denial of service, and disclosure of locally saved results.
+- evidence: `webui/app.py`, `webui/security.py`, `webui/run.py`, `webui/start.sh`, `.gitignore`, `tests/webui/test_security.py`, and `docs/reviews/ADVERSARIAL_REVIEW_WEBUI_SECURITY.md`.
 - owner: Unassigned
-- status: Open — deployment and network-exposure blocker
-- required work: Bind to loopback by default, remove debug execution, allowlist the data directory, restrict origins, validate request bounds/devices, sanitize errors, remove runtime self-install, add security regressions, and document any authenticated remote-access design.
+- status: Partially resolved — approved for deliberate single-user loopback use only; remote deployment remains blocked
+- required work: Before any remote use, design and test authentication/authorization, TLS, rate limiting, multi-user isolation, workload quotas/cancellation, production serving, immutable checkpoint revisions, self-hosted browser assets, and secret/result governance.
 - blocking decision: Any Web UI deployment, Tailscale exposure, or production-readiness claim
-- related PR: None
+- related PR: Web UI security PR
 - related experiment: None
