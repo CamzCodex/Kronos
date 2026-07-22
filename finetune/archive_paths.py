@@ -8,11 +8,18 @@ from pathlib import Path
 
 import pandas as pd
 
-from .data_io import (
-    UnsafeLegacyFormatError,
-    load_frame_mapping,
-    save_frame_mapping,
-)
+try:
+    from .data_io import (
+        UnsafeLegacyFormatError,
+        load_frame_mapping,
+        save_frame_mapping,
+    )
+except ImportError:  # Script-style execution from the finetune directory.
+    from data_io import (
+        UnsafeLegacyFormatError,
+        load_frame_mapping,
+        save_frame_mapping,
+    )
 
 SAFE_ARCHIVE_SUFFIX = ".kronos.zip"
 LEGACY_PICKLE_SUFFIX = ".pkl"
