@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import pickle
+import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
@@ -81,7 +83,7 @@ def _rewrite_archive(
 
 def test_public_save_paths_use_the_streaming_writer():
     assert save_frame_mapping is archive_writer.save_frame_mapping
-    assert data_io.save_frame_mapping is archive_writer.save_frame_mapping
+    assert data_io.save_frame_mapping is not archive_writer.save_frame_mapping
 
 
 def test_safe_archive_round_trip(tmp_path):
@@ -154,6 +156,64 @@ def test_failed_streaming_write_preserves_existing_destination(tmp_path, monkeyp
 
     assert destination.read_bytes() == original_bytes
     assert not list(tmp_path.glob(f".{destination.name}.*.tmp"))
+
+
+def test_failed_archive_validation_preserves_existing_destination(tmp_path, monkeypatch):
+    destination = tmp_path / "dataset.kronos.zip"
+    original_bytes = b"existing archive placeholder"
+    destination.write_bytes(original_bytes)
+
+    def fail_validation(*_args, **_kwargs):
+        raise data_io.DataArchiveError("synthetic validation failure")
+
+    monkeypatch.setattr(archive_writer, "_validate_written_archive", fail_validation)
+
+    with pytest.raises(data_io.DataArchiveError, match="synthetic validation failure"):
+        archive_writer.save_frame_mapping(_labelled_frames(), destination)
+
+    assert destination.read_bytes() == original_bytes
+    assert not list(tmp_path.glob(f".{destination.name}.*.tmp"))
+
+
+def test_data_io_wrapper_delegates_to_streaming_writer(tmp_path, monkeypatch):
+    destination = tmp_path / "delegated.kronos.zip"
+    calls = []
+
+    def tracked_save(data, path):
+        calls.append((data, path))
+        return destination
+
+    monkeypatch.setattr(archive_writer, "save_frame_mapping", tracked_save)
+
+    result = data_io.save_frame_mapping(_labelled_frames(), destination)
+
+    assert result == destination
+    assert len(calls) == 1
+    assert calls[0][1] == destination
+
+
+def test_data_io_script_migration_uses_streaming_writer(tmp_path):
+    source = tmp_path / "trusted.pkl"
+    destination = tmp_path / "migrated.kronos.zip"
+    with source.open("wb") as handle:
+        pickle.dump(_labelled_frames(), handle)
+
+    script = Path(data_io.__file__).resolve()
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            str(source),
+            str(destination),
+            "--allow-unsafe-pickle",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    _assert_frame_maps_equal(data_io.load_frame_mapping(destination), _labelled_frames())
 
 
 def test_legacy_pickle_is_blocked_before_deserialisation(tmp_path, monkeypatch):
