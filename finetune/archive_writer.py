@@ -20,18 +20,24 @@ import pandas as pd
 
 try:
     from .data_io import (
+        DataArchiveError,
         FORMAT_NAME,
         FORMAT_VERSION,
         MANIFEST_NAME,
+        _read_manifest,
+        _validate_archive_structure,
         _frame_to_bytes,
         _validate_frame_mapping,
         _write_member,
     )
 except ImportError:  # Script-style execution from the finetune directory.
     from data_io import (
+        DataArchiveError,
         FORMAT_NAME,
         FORMAT_VERSION,
         MANIFEST_NAME,
+        _read_manifest,
+        _validate_archive_structure,
         _frame_to_bytes,
         _validate_frame_mapping,
         _write_member,
@@ -53,6 +59,50 @@ def _manifest_bytes(entries: list[dict[str, Any]]) -> bytes:
         sort_keys=True,
         separators=(",", ":"),
     ).encode(_JSON_ENCODING)
+
+
+def _validate_written_archive(
+    path: Path,
+    *,
+    expected_entries: list[dict[str, Any]],
+    expected_manifest: bytes,
+) -> None:
+    """Validate a completed temporary archive without materialising frames."""
+
+    with zipfile.ZipFile(path, mode="r") as archive:
+        members = _validate_archive_structure(
+            archive,
+            max_members=len(expected_entries) + 1,
+            max_member_bytes=max(
+                [len(expected_manifest), *(entry["size"] for entry in expected_entries)]
+            ),
+            max_uncompressed_bytes=len(expected_manifest)
+            + sum(entry["size"] for entry in expected_entries),
+        )
+        manifest = _read_manifest(archive)
+        if archive.read(MANIFEST_NAME) != expected_manifest:
+            raise DataArchiveError("written archive manifest changed unexpectedly")
+        if manifest.get("entries") != expected_entries:
+            raise DataArchiveError("written archive entries do not match the writer manifest")
+
+        expected_members = {MANIFEST_NAME}
+        for entry in expected_entries:
+            member_path = entry["path"]
+            expected_members.add(member_path)
+            info = members.get(member_path)
+            if info is None or info.file_size != entry["size"]:
+                raise DataArchiveError(f"written archive member {member_path!r} is invalid")
+            digest = hashlib.sha256()
+            with archive.open(member_path, mode="r") as payload:
+                for chunk in iter(lambda: payload.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            if digest.hexdigest() != entry["sha256"]:
+                raise DataArchiveError(
+                    f"written archive member {member_path!r} failed checksum validation"
+                )
+
+        if set(members) != expected_members:
+            raise DataArchiveError("written archive contains unexpected members")
 
 
 def save_frame_mapping(
@@ -96,7 +146,14 @@ def save_frame_mapping(
                 )
                 del payload
 
-            _write_member(archive, MANIFEST_NAME, _manifest_bytes(entries))
+            manifest_payload = _manifest_bytes(entries)
+            _write_member(archive, MANIFEST_NAME, manifest_payload)
+
+        _validate_written_archive(
+            temporary_path,
+            expected_entries=entries,
+            expected_manifest=manifest_payload,
+        )
 
         with temporary_path.open("rb") as handle:
             os.fsync(handle.fileno())
