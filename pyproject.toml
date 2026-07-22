@@ -59,10 +59,11 @@ Source = "https://github.com/CamzCodex/Kronos"
 Issues = "https://github.com/CamzCodex/Kronos/issues"
 
 [tool.setuptools.packages.find]
-include = ["model", "model.*", "finetune", "finetune.*"]
+include = ["model", "model.*", "finetune", "finetune.*", "kronos_data", "kronos_data.*"]
 
 [tool.setuptools.package-data]
 model = ["py.typed"]
+kronos_data = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -89,4 +90,4 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["finetune", "model"]
+known-first-party = ["finetune", "kronos_data", "model"]
