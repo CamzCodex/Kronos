@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      PIP_AUDIT_CACHE_DIR: ${{ runner.temp }}/pip-audit
+      PIP_AUDIT_CACHE_DIR: /tmp/pip-audit
 
     steps:
       - name: Check out repository
