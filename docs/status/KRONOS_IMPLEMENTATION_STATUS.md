@@ -1,21 +1,21 @@
 # Kronos implementation status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `2a4776a096416c1b24de579758f82ecd46fbb952`
+Evidence baseline: `master` at `813aee9a02fa088ff219e0a503cb15afd046471e`
 Operating mode: research and paper simulation only; no broker execution
 
 ## Executive status
 
-Kronos has a materially stronger engineering foundation than the upstream demo, but it does not yet contain the research system required to determine whether the model adds economically useful information. Storage, sampling, packaging, selected model primitives, pinned-checkpoint numerical regression, the reusable canonical data contract, and the reusable causal auditor are hardened. A typed probabilistic forecast contract is implemented on the active phase branch and remains gated on CI and released-checkpoint regression. A real approved dataset and audit, walk-forward engine, baseline suite, executable experiment registry, and zero-shot benchmark are not implemented.
+Kronos has a materially stronger engineering foundation than the upstream demo, but it does not yet contain the research system required to determine whether the model adds economically useful information. Storage, sampling, packaging, selected model primitives, pinned-checkpoint numerical regression, the reusable canonical data contract, causal auditor, and typed probabilistic forecast contract are hardened. A deterministic leakage-gated walk-forward split planner is implemented on the active phase branch; the baseline/metric runner, real approved dataset and audit, executable experiment registry, and zero-shot benchmark are not implemented.
 
 Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VALIDATED**.
 
 ## Reconciled repository state
 
 - Default branch: `master`.
-- Current master SHA at this phase's start: `2a4776a096416c1b24de579758f82ecd46fbb952`.
-- Open pull requests at this phase's start: none after PR #14 merged.
-- Most recent merge at this phase's start: PR #14, leakage and point-in-time causality auditor.
+- Current master SHA at this phase's start: `813aee9a02fa088ff219e0a503cb15afd046471e`.
+- Open pull requests at this phase's start: none after PR #15 merged.
+- Most recent merge at this phase's start: PR #15, probabilistic forecast API and path validity.
 - The mission's previously expected SHA, `af9c4bb0d1c6d4883e1d9ea28a83632c1c6eb978`, was correct before PR #11.
 - The repository has no release tag or declared production deployment.
 
@@ -33,13 +33,14 @@ Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VAL
 | Memory-bounded multi-frame archive writing and pre-replacement validation | PR #11; `finetune/archive_writer.py` | Complete for format v1 |
 | Canonical bar schema, structured validation, deterministic dataset manifests and data-card templates | `kronos_data/`; `data/canonical-market-contract` | Complete as a reusable contract; not yet bound to a real source |
 | Leakage and causality auditor with deliberate contamination fixtures | `kronos_data/leakage.py`; `data/leakage-auditor` | Complete as a reusable gate; not yet bound to a real experiment |
-| Typed raw-path forecast API, explicit randomness, candle validity and repair accounting | `model/forecast.py`; `inference/probabilistic-forecast-api` | Implemented; not complete until phase CI and checkpoint regression pass |
+| Typed raw-path forecast API, explicit randomness, candle validity and repair accounting | PR #15; `model/forecast.py` | Complete for the covered API; pinned released-checkpoint regression passed |
+| Expanding/rolling fold planning, fixed holdout, purge/embargo records and audit binding | `kronos_eval/walk_forward.py`; `evaluation/walk-forward-engine` | Implemented on the phase branch; not an evaluation runner or real-data result |
 
 ## Branch reconciliation
 
 ### Current development branches
 
-`inference/probabilistic-forecast-api` is the active focused branch for this phase. Its capabilities are not treated as merged until offline, package, and released-checkpoint gates pass.
+`evaluation/walk-forward-engine` is the active focused branch for this phase. Its capabilities are not treated as merged until offline and package gates pass.
 
 ### Retained historical branches
 
@@ -53,6 +54,7 @@ Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VAL
 - `docs/phase-0-reconciliation`
 - `data/canonical-market-contract`
 - `data/leakage-auditor`
+- `inference/probabilistic-forecast-api`
 - `import/upstream-pr-247-offline-tests`
 - `import/upstream-pr-262-sampling`
 - `import/upstream-pr-263-csv-leakage`
@@ -69,10 +71,10 @@ Branch deletion is not required for correctness and is deferred until repository
 ## Known failures and blockers
 
 1. **Critical — split contamination:** `finetune/config.py` overlaps training and validation from 2022-09-01 through 2022-12-31, and validation and test from 2024-04-01 through 2024-06-30. The overlap exceeds the declared 90-row lookback accommodation. Current demo fine-tuning and backtesting cannot support an untouched out-of-sample claim.
-2. **Critical — no real dataset has passed the leakage auditor:** the reusable gate exists on this phase branch, but generated source provenance, per-fold audit attachment, and enforcement in an evaluation runner do not.
-3. **High — no approved real dataset:** the canonical contract now exists on this phase branch, but no selected provider, authoritative calendar, point-in-time universe, licensed raw snapshot, or immutable benchmark manifest exists.
-4. **High — probabilistic interface not yet empirically calibrated:** the phase branch exposes typed raw samples, quantiles, return distributions, explicit randomness, and repair accounting while retaining legacy wrappers. No walk-forward evidence establishes that sample frequencies are calibrated, and CI/checkpoint compatibility remain phase merge gates.
-5. **High — no walk-forward evidence engine:** expanding/rolling folds, purging/embargo, mandatory baselines, probabilistic metrics, conservative costs, and final holdout do not exist.
+2. **Critical — no real dataset has passed the leakage auditor:** the reusable gate and identity-bound fold attachment exist, but no selected source has generated complete provenance or a passing real audit.
+3. **High — no approved real dataset:** the canonical contract exists, but no selected provider, authoritative calendar, point-in-time universe, licensed raw snapshot, or immutable benchmark manifest exists.
+4. **High — probabilistic interface not yet empirically calibrated:** PR #15 exposes typed raw samples, quantiles, return distributions, explicit randomness, and repair accounting while retaining legacy wrappers. No walk-forward evidence establishes calibration.
+5. **High — no walk-forward evidence runner:** the phase branch builds immutable expanding/rolling folds, purge/embargo records, a fixed final holdout and audit bindings. Mandatory baselines, metrics, actual cost application, final isolation enforcement, and real runs remain absent.
 6. **High — no evidence-grade benchmark:** no repository artifact demonstrates incremental forecasting or economic value over a naive baseline.
 7. **Medium — incomplete CI controls:** Ruff is configured but not a required workflow; static type checks, dependency vulnerability scanning, secret scanning, explicit leakage smoke, and evaluation smoke are absent.
 8. **Medium — training runner limitations:** current training scripts assume DDP-oriented execution and do not provide the required single-process CPU/GPU debug, resume, immutable lineage, and promotion controls.
@@ -85,6 +87,7 @@ Branch deletion is not required for correctness and is deferred until repository
 - PR #12 offline and package smoke: success on Python 3.10 and 3.12.
 - PR #13 offline and package smoke: success on Python 3.10 and 3.12.
 - PR #14 offline and package smoke: success on Python 3.10 and 3.12.
+- PR #15 offline and package smoke: success on Python 3.10 and 3.12; pinned released-checkpoint regression success.
 - PR #4 released-checkpoint regression: success at the pinned model and tokenizer revisions.
 - No failing required check was observed during reconciliation.
 - Absence of a workflow is not treated as a passing control.
@@ -93,15 +96,15 @@ Branch deletion is not required for correctness and is deferred until repository
 
 1. Select the reference source and bind its authoritative calendar, point-in-time universe, raw hashes, and licensing to the canonical contract.
 2. Generate and bind leakage-audit provenance for the selected ingestion and evaluation paths.
-3. Merge the typed probabilistic result only after cross-version, package, and pinned-checkpoint gates pass.
-4. Build the walk-forward engine and make every fold attach a passed leakage audit.
-5. Add identical-information baselines, then run the released-checkpoint zero-shot benchmark before any serious fine-tuning or paper-portfolio promotion.
+3. Merge the walk-forward protocol only after cross-version and package gates pass.
+4. Add identical-information baselines, metrics, cost application, and an evaluation smoke gate that accepts only passed audited folds.
+5. Run the released-checkpoint zero-shot benchmark before any serious fine-tuning or paper-portfolio promotion.
 
 ## Next three planned PRs
 
-1. `evaluation/walk-forward-engine` — expanding/rolling folds, fixed holdout, purging/embargo, immutable fold records and mandatory leakage results.
-2. `evaluation/baseline-suite` — identical-information naive, statistical, tree, direction, volatility, and cost-aware comparisons.
-3. `registry/experiment-and-model-lineage` — reconstructable experiment identity, artifact registration, and promotion aliases.
+1. `evaluation/baseline-suite` — identical-information naive, statistical, tree, direction, volatility, metrics, and cost-aware comparisons.
+2. `registry/experiment-and-model-lineage` — reconstructable experiment identity, artifact registration, and promotion aliases.
+3. `evaluation/reference-zero-shot-benchmark` — approved dataset, real fold audits, released checkpoint, baselines, immutable report pack and decision.
 
 ## Merge policy
 

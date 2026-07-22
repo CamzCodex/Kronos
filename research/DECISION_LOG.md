@@ -90,3 +90,16 @@
 - reversal trigger: A versioned forecast-contract change supported by backward-compatibility tests and stronger evidence-preservation guarantees.
 - related commit: Introduced by `inference/probabilistic-forecast-api`
 - related PR: This phase's pull request
+
+## DEC-008 — Walk-forward target roles cannot be reused
+
+- decision_id: `DEC-008`
+- date: 2026-07-22
+- decision: Build folds from the validated observation index; prevent validation, calibration, purge, or test observations from being reused in those roles across folds; allow later training to expand or roll through a fully observed prior test; reserve one fixed embargoed final holdout; and classify truncated or single-fold plans as non-decision-grade.
+- alternatives: Arbitrary date strings; overlapping rolling test windows; one favorable fold; a moving final holdout; silent fold truncation.
+- evidence: `kronos_eval/walk_forward.py`, walk-forward regression tests, and the Phase 5A adversarial review.
+- reasoning: Reused evaluation targets and movable holdouts create correlated evidence and selection opportunities that can look like robustness without independent periods.
+- risks: Conservative stepping produces fewer folds, and observation-count purge can still be too short for the actual horizon/feature availability. The configured gap and sensitivity must be justified by each benchmark.
+- reversal trigger: A versioned alternative resampling protocol with explicit dependence correction, contamination tests, and evidence that it strengthens rather than inflates inference.
+- related commit: Introduced by `evaluation/walk-forward-engine`
+- related PR: This phase's pull request

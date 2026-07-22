@@ -45,6 +45,7 @@ jobs:
           from importlib.metadata import version
           import finetune
           import kronos_data
+          import kronos_eval
           import model
           from finetune import (
               archive_writer,
@@ -70,6 +71,8 @@ jobs:
           assert callable(kronos_data.validate_bars)
           assert callable(kronos_data.build_dataset_manifest)
           assert callable(kronos_data.audit_leakage)
+          assert callable(kronos_eval.build_walk_forward_plan)
+          assert callable(kronos_eval.attach_leakage_audit)
           assert callable(load_frame_mapping)
           assert callable(load_named_frame_mapping)
           assert callable(load_test_data)
@@ -98,6 +101,7 @@ jobs:
 
           import finetune
           import kronos_data
+          import kronos_eval
           import model
           from finetune import archive_paths, archive_writer, backtest_io, data_io
 
@@ -105,14 +109,17 @@ jobs:
           model_imported_from = Path(model.__file__).resolve()
           finetune_imported_from = Path(finetune.__file__).resolve()
           data_imported_from = Path(kronos_data.__file__).resolve()
+          evaluation_imported_from = Path(kronos_eval.__file__).resolve()
 
           assert not model_imported_from.is_relative_to(workspace)
           assert not finetune_imported_from.is_relative_to(workspace)
           assert not data_imported_from.is_relative_to(workspace)
+          assert not evaluation_imported_from.is_relative_to(workspace)
           assert version("kronos-timeseries") == model.__version__
           assert model.get_model_class("kronos") is model.Kronos
           assert model.ForecastRequest is not None
           assert model.ForecastResult is not None
+          assert callable(kronos_eval.build_walk_forward_plan)
           assert data_io.FORMAT_VERSION == 1
           assert callable(data_io.save_frame_mapping)
           assert data_io.save_frame_mapping is not archive_writer.save_frame_mapping
