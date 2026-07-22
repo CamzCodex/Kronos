@@ -411,7 +411,7 @@ def _audit_splits(
         SplitRole.FINAL_HOLDOUT: 4,
     }
     roles = [details[0] for _, details in ordered]
-    if roles != sorted(roles, key=role_rank.get):
+    if roles != sorted(roles, key=lambda role: role_rank[role]):
         findings.append(
             AuditFinding(
                 code="split_role_order_invalid",

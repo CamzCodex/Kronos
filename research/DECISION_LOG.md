@@ -181,3 +181,16 @@
 - reversal trigger: A complete user-supplied licensed evidence package or separately authorized paid-source evaluation passes the versioned source gate and downstream canonical/leakage validation.
 - related commit: Introduced by `data/reference-source-gate`
 - related PR: `#21`
+
+## DEC-015 — Quality and security gates are scoped and fail closed
+
+- decision_id: `DEC-015`
+- date: 2026-07-22
+- decision: Require exact-pinned Ruff, Mypy, pip-audit, Gitleaks, archive, leakage, and evaluation checks for the maintained research surface; do not describe excluded legacy code or unverified GitHub repository settings as covered.
+- alternatives: Add no gates; lint the entire legacy tree and leave CI permanently red; suppress all existing findings; use mutable security-action tags.
+- evidence: `.github/workflows/quality-security.yml`, `requirements-quality.txt`, local Ruff/Mypy/audit results, 329 offline tests, clean sdist/wheel build, and the quality/security adversarial review.
+- reasoning: A narrow green gate that names its exclusions creates enforceable forward progress, while a knowingly red or silently suppressed whole-tree gate provides no reliable merge signal.
+- risks: Known-vulnerability databases and secret patterns can miss novel threats; pinned tools age; third-party Actions remain a supply-chain dependency; legacy executable code remains outside static coverage; branch protection is not established by a workflow file.
+- reversal trigger: Expand the gate monotonically when legacy surfaces are repaired, or replace a tool only with a pinned, tested control that provides equal or stronger evidence.
+- related commit: Introduced by the quality/security gate branch
+- related PR: This phase's pull request

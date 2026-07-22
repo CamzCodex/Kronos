@@ -217,14 +217,14 @@ def _last_value(close: np.ndarray, request: BaselineRequest):
 
 def _drift(close: np.ndarray, request: BaselineRequest):
     log_drift = (math.log(close[-1]) - math.log(close[0])) / (len(close) - 1)
-    steps = np.arange(1, request.horizon + 1, dtype=float)
+    steps: np.ndarray = np.arange(1, request.horizon + 1, dtype=float)
     path = close[-1] * np.exp(log_drift * steps)
     return _deterministic(path, close, {"method": "log_random_walk_drift"})
 
 
 def _seasonal_naive(close: np.ndarray, request: BaselineRequest):
     seasonal = close[-request.seasonal_period :]
-    indices = np.arange(request.horizon) % request.seasonal_period
+    indices: np.ndarray = np.arange(request.horizon) % request.seasonal_period
     path = seasonal[indices]
     return _deterministic(
         path,
@@ -260,7 +260,7 @@ def _exponential_smoothing(close: np.ndarray, request: BaselineRequest):
 def _momentum(close: np.ndarray, request: BaselineRequest):
     recent = close[-(request.momentum_lookback + 1) :]
     mean_log_return = float(np.mean(np.diff(np.log(recent))))
-    steps = np.arange(1, request.horizon + 1, dtype=float)
+    steps: np.ndarray = np.arange(1, request.horizon + 1, dtype=float)
     path = close[-1] * np.exp(mean_log_return * steps)
     return _deterministic(
         path,
@@ -271,7 +271,7 @@ def _momentum(close: np.ndarray, request: BaselineRequest):
 
 def _mean_reversion(close: np.ndarray, request: BaselineRequest):
     target = float(np.mean(close[-request.mean_reversion_window :]))
-    steps = np.arange(1, request.horizon + 1, dtype=float)
+    steps: np.ndarray = np.arange(1, request.horizon + 1, dtype=float)
     remaining = (1.0 - request.mean_reversion_strength) ** steps
     path = target + (close[-1] - target) * remaining
     return _deterministic(
@@ -287,11 +287,11 @@ def _mean_reversion(close: np.ndarray, request: BaselineRequest):
 
 def _linear_regression(close: np.ndarray, request: BaselineRequest):
     lookback = min(request.linear_lookback, len(close))
-    y = np.log(close[-lookback:])
-    x = np.arange(lookback, dtype=float)
+    y: np.ndarray = np.log(close[-lookback:])
+    x: np.ndarray = np.arange(lookback, dtype=float)
     design = np.column_stack([np.ones(lookback), x])
     intercept, slope = np.linalg.lstsq(design, y, rcond=None)[0]
-    future_x = np.arange(lookback, lookback + request.horizon, dtype=float)
+    future_x: np.ndarray = np.arange(lookback, lookback + request.horizon, dtype=float)
     path = np.exp(intercept + slope * future_x)
     return _deterministic(
         path,
@@ -308,7 +308,7 @@ def _simple_tree(close: np.ndarray, request: BaselineRequest):
         features.append(_tree_features(partial))
         targets.append(math.log(close[end_position + 1] / close[end_position]))
     x = np.asarray(features, dtype=float)
-    y = np.asarray(targets, dtype=float)
+    y: np.ndarray = np.asarray(targets, dtype=float)
     if len(y) < request.tree_min_leaf * 2:
         raise BaselineFitError("simple_tree has insufficient training rows")
     tree = _fit_tree(
@@ -384,7 +384,7 @@ def _volatility(close: np.ndarray, request: BaselineRequest):
         variance = request.volatility_decay * variance + (
             1.0 - request.volatility_decay
         ) * float(value**2)
-    sigma = math.sqrt(max(variance, np.finfo(float).tiny))
+    sigma = math.sqrt(max(variance, float(np.finfo(float).tiny)))
     generator = np.random.default_rng(int(request.seed))
     shocks = generator.standard_normal((request.sample_count, request.horizon))
     log_steps = -0.5 * sigma**2 + sigma * shocks
@@ -622,7 +622,9 @@ def _fit_tree(
             continue
         thresholds = (unique[:-1] + unique[1:]) / 2.0
         if len(thresholds) > 32:
-            positions = np.linspace(0, len(thresholds) - 1, 32, dtype=int)
+            positions: np.ndarray = np.linspace(
+                0, len(thresholds) - 1, 32, dtype=int
+            )
             thresholds = thresholds[positions]
         for threshold in thresholds:
             left_mask = x[:, feature_index] <= threshold

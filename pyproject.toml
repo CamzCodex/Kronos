@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,7 @@ version = "0.1.0.dev0"
 description = "Foundation models for financial candlestick time-series forecasting"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [
   { name = "Kronos contributors" },
 ]
@@ -16,7 +16,6 @@ keywords = ["time-series", "finance", "forecasting", "transformer", "pytorch"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -49,6 +48,8 @@ test = [
 ]
 dev = [
   "build>=1,<2",
+  "mypy>=1.14,<3",
+  "pip-audit>=2.10,<3",
   "pytest>=8,<10",
   "ruff>=0.9",
 ]
@@ -91,4 +92,13 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["finetune", "kronos_data", "model"]
+known-first-party = ["finetune", "kronos_data", "kronos_eval", "model"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["kronos_data", "kronos_eval", "model/forecast.py"]
+follow_imports = "skip"
+ignore_missing_imports = true
+no_site_packages = true
+show_error_codes = true
+warn_unused_configs = true

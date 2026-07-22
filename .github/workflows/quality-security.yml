@@ -1,0 +1,136 @@
+name: Quality and security gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-quality:
+    name: Ruff and maintained-surface typing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-quality.txt
+
+      - name: Install pinned quality tools
+        run: python -m pip install -r requirements-quality.txt
+
+      - name: Lint hardened packages
+        run: |
+          python -m ruff check \
+            kronos_data \
+            kronos_eval \
+            model/forecast.py \
+            finetune/archive_writer.py \
+            finetune/data_io.py
+
+      - name: Type-check maintained contracts
+        run: python -m mypy
+
+  dependency-audit:
+    name: Dependency vulnerability audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PIP_AUDIT_CACHE_DIR: ${{ runner.temp }}/pip-audit
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-quality.txt
+
+      - name: Install pinned audit tool
+        run: python -m pip install -r requirements-quality.txt
+
+      - name: Audit core requirements
+        run: python -m pip_audit -r requirements.txt --progress-spinner off
+
+      - name: Audit Web UI requirements
+        run: python -m pip_audit -r webui/requirements.txt --progress-spinner off
+
+  integrity-smoke:
+    name: Archive, leakage, and evaluation smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package and tests
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+
+      - name: Run archive security regressions
+        run: |
+          python -m pytest -q \
+            tests/test_data_io.py \
+            tests/test_archive_paths.py \
+            tests/test_backtest_io.py
+
+      - name: Run leakage and data-integrity regressions
+        run: |
+          python -m pytest -q \
+            tests/test_market_data_validation.py \
+            tests/test_dataset_manifests.py \
+            tests/test_leakage_auditor.py \
+            tests/test_reference_source_gate.py
+
+      - name: Run evaluation smoke regressions
+        run: |
+          python -m pytest -q \
+            tests/test_walk_forward.py \
+            tests/test_baselines.py \
+            tests/test_evaluation_metrics.py \
+            tests/test_evaluation_costs.py \
+            tests/test_fold_aggregation.py \
+            tests/test_evaluation_runner.py \
+            tests/test_experiment_registry.py
+
+  secret-scan:
+    name: Repository secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan committed history for secrets
+        uses: gitleaks/gitleaks-action@bcfb9cce635345aac9996cedc19b2de8e01b894f
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

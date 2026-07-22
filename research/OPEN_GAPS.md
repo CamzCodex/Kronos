@@ -95,16 +95,16 @@ Status date: 2026-07-22
 ## GAP-007 — CI control gaps
 
 - gap_id: `GAP-007`
-- title: Required lint, type, security, leakage, and evaluation gates absent
-- description: Existing workflows cover offline tests, packaging, and path-filtered checkpoint regression only.
+- title: Required quality and security gates need full repository enforcement
+- description: A focused workflow now covers Ruff, maintained-surface Mypy, dependency auditing, full-history secret scanning, and explicit archive/leakage/evaluation smoke tests. Legacy examples, `finetune_csv`, Web UI source, older model internals, branch-protection settings, and GitHub-native secret scanning are outside the proved scope.
 - severity: Medium
 - impact: Important classes of defects can merge without an automated gate.
-- evidence: `.github/workflows/` contains three workflows at reconciliation.
+- evidence: `.github/workflows/quality-security.yml`, `requirements-quality.txt`, and `docs/operations/QUALITY_AND_SECURITY_GATES.md`.
 - owner: Unassigned
-- status: Open
-- required work: Add focused Ruff, typing, dependency, secret, leakage, and evaluation-smoke workflows without broad formatting churn.
+- status: Partially resolved — focused automated gates implemented; full legacy coverage and repository-setting enforcement remain open
+- required work: Require all green workflow jobs in branch protection, confirm GitHub-native secret scanning where available, and bring remaining executable surfaces under staged Ruff, type, and security review.
 - blocking decision: Production-readiness classification
-- related PR: None
+- related PR: Quality/security gate PR for this phase
 - related experiment: None
 
 ## GAP-008 — Released-checkpoint preprocessing provenance
@@ -131,10 +131,10 @@ Status date: 2026-07-22
 - impact: No current build failure, but a future setuptools release can stop accepting the existing metadata.
 - evidence: Local Phase 4 package build output from current `pyproject.toml`; package smoke remains green.
 - owner: Unassigned
-- status: Open — non-blocking
-- required work: Make a focused packaging-metadata PR, verify published metadata, sdist, wheel, and supported Python imports.
+- status: Resolved in the quality/security gate phase
+- required work: Retain SPDX metadata and `setuptools>=77`; keep package smoke required.
 - blocking decision: None for research evaluation; blocks future packaging-readiness claim after the enforcement date.
-- related PR: None
+- related PR: Quality/security gate PR for this phase
 - related experiment: None
 
 ## GAP-010 — Registry metadata and approvals are not independently attested
@@ -150,4 +150,19 @@ Status date: 2026-07-22
 - required work: Capture Git/environment state in the executable launcher, bind passed audit/result artifacts automatically, resolve approval evidence to repository records, serialize concurrent writers, and define signed or repository-governed promotion authority before production use.
 - blocking decision: Model promotion and production-readiness classification
 - related PR: `#20`
+- related experiment: None
+
+## GAP-011 — Legacy Web UI is not safe for network exposure
+
+- gap_id: `GAP-011`
+- title: Bundled Flask UI retains a non-production trust boundary
+- description: The Web UI starts the Flask debugger on all interfaces, enables unrestricted CORS, accepts a client-supplied filesystem path, returns internal exception text, and can install dependencies at runtime. Dependency pins with eight published findings were upgraded in the quality/security phase, but application-level controls remain absent.
+- severity: High
+- impact: Exposing the current UI beyond a trusted local machine could enable local-file disclosure, cross-origin invocation, debugger abuse, resource exhaustion, and sensitive error leakage.
+- evidence: `webui/app.py`, `webui/run.py`, `webui/start.sh`, and the pre-upgrade `pip-audit` result for Flask 2.3.3 and Flask-CORS 4.0.0.
+- owner: Unassigned
+- status: Open — deployment and network-exposure blocker
+- required work: Bind to loopback by default, remove debug execution, allowlist the data directory, restrict origins, validate request bounds/devices, sanitize errors, remove runtime self-install, add security regressions, and document any authenticated remote-access design.
+- blocking decision: Any Web UI deployment, Tailscale exposure, or production-readiness claim
+- related PR: None
 - related experiment: None

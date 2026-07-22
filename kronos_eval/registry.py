@@ -447,7 +447,12 @@ class ExperimentRegistry:
             "reason": reason,
         }
         event = AliasEvent(
-            event_id=f"kae-{hash_configuration(event_payload)[:24]}", **event_payload
+            event_id=f"kae-{hash_configuration(event_payload)[:24]}",
+            alias=alias,
+            experiment_id=experiment_id,
+            previous_experiment_id=previous,
+            updated_at=timestamp,
+            reason=reason,
         )
         event_path = self.root / "alias-events" / alias / f"{event.event_id}.json"
         _write_immutable(event_path, event.to_json().encode("utf-8"))

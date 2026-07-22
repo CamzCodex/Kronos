@@ -20,25 +20,25 @@ import pandas as pd
 
 try:
     from .data_io import (
-        DataArchiveError,
         FORMAT_NAME,
         FORMAT_VERSION,
         MANIFEST_NAME,
+        DataArchiveError,
+        _frame_to_bytes,
         _read_manifest,
         _validate_archive_structure,
-        _frame_to_bytes,
         _validate_frame_mapping,
         _write_member,
     )
 except ImportError:  # Script-style execution from the finetune directory.
     from data_io import (
-        DataArchiveError,
         FORMAT_NAME,
         FORMAT_VERSION,
         MANIFEST_NAME,
+        DataArchiveError,
+        _frame_to_bytes,
         _read_manifest,
         _validate_archive_structure,
-        _frame_to_bytes,
         _validate_frame_mapping,
         _write_member,
     )
