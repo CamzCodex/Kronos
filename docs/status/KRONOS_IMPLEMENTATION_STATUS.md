@@ -1,7 +1,7 @@
 # Kronos implementation status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `60914d567cc5407ab7edfdb38aab9abb75adbdaa` plus the Web UI security phase
+Evidence baseline: `master` at `7f99e93962f1a4baee617874605871433578731e` plus the data-acquisition closeout phase
 Operating mode: research and paper simulation only; no broker execution
 
 ## Executive status
@@ -13,9 +13,9 @@ Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VAL
 ## Reconciled repository state
 
 - Default branch: `master`.
-- Current master SHA at Web UI phase start: `60914d567cc5407ab7edfdb38aab9abb75adbdaa`.
-- Most recent merge at phase start: PR #23, required quality and security gates.
-- The Web UI security branch is intentionally limited to the bundled local demonstration boundary; its merge evidence is recorded in the phase PR.
+- Current master SHA at acquisition phase start: `7f99e93962f1a4baee617874605871433578731e`.
+- Most recent merge at phase start: PR #24, local-only Web UI trust boundary.
+- PR #24 removed 29 generated path-disclosing demo results and passed quality/security #7, offline #121, and package #106.
 - The mission's previously expected SHA, `af9c4bb0d1c6d4883e1d9ea28a83632c1c6eb978`, was correct before PR #11.
 - The repository has no release tag or declared production deployment.
 
@@ -39,17 +39,18 @@ Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VAL
 | Point/direction/ranking/probabilistic scoring, causal paper-cost ledgers and final-isolated paired fold aggregation | PR #18; `kronos_eval/metrics.py`; `costs.py`; `aggregation.py` | Complete as calculation contracts; not run on real forecasts |
 | Passed-audit-only complete comparator execution, test/final boundary enforcement, truth matching and immutable fold results | PR #19; `kronos_eval/runner.py` | Merged; no real inputs or result |
 | Byte-verified content-addressed experiment records, reconstruction, immutable alias history and promotion policy | PR #20; `kronos_eval/registry.py` | Merged; no real experiment registered |
-| Fail-closed source licensing/access/snapshot/calendar/adjustment/universe/delisting/reproducibility gate | PR #21; `kronos_data/source_gate.py` | Merged; no source approved |
+| Fail-closed source licensing/access/snapshot/calendar/adjustment/universe/delisting/reproducibility gate | PR #21 plus gate v1.1 entitlement binding; `kronos_data/source_gate.py` | Paid access now requires a retained contract SHA-256; no source approved |
 | Pinned Ruff/Mypy/dependency/secret/archive/leakage/evaluation merge controls | PR #23; `.github/workflows/quality-security.yml` | Active on branch pushes; branch-protection settings remain unverified |
-| Local-only Web UI trust boundary, strict input refusal, and route regressions | `webui/security.py`; `tests/webui/test_security.py`; Web UI adversarial review | Complete for deliberate single-user loopback use; every remote deployment remains blocked |
+| Local-only Web UI trust boundary, strict input refusal, and route regressions | PR #24; `webui/security.py`; `tests/webui/test_security.py`; Web UI adversarial review | Merged for deliberate single-user loopback use; every remote deployment remains blocked |
+| Conditional provider acquisition decision and signed-contract checklist | Acquisition decision and adversarial review | Preferred technical product selected; standard purchase rejected; no source acquired or approved |
 
 ## Branch reconciliation
 
 ### Current development branches
 
-- `security/webui-local-boundary` — bounded local demonstration boundary and adversarial regressions.
+- `docs/data-acquisition-closeout` — provider contract/acquisition decision and final status reconciliation.
 
-The next source-adapter branch remains blocked pending a complete licensed data evidence package or acceptable provider terms.
+The next source-adapter branch remains blocked pending a signed durable-retention licence and a trial export that passes the source gate.
 
 ### Retained historical branches
 
@@ -87,7 +88,7 @@ Branch deletion is not required for correctness and is deferred until repository
 
 1. **Critical — split contamination:** `finetune/config.py` overlaps training and validation from 2022-09-01 through 2022-12-31, and validation and test from 2024-04-01 through 2024-06-30. The overlap exceeds the declared 90-row lookback accommodation. Current demo fine-tuning and backtesting cannot support an untouched out-of-sample claim.
 2. **Critical — no real dataset has passed the leakage auditor:** the reusable gate and identity-bound fold attachment exist, but no selected source has generated complete provenance or a passing real audit.
-3. **Critical — no approved real dataset:** the canonical contract and merged source gate record the required evidence, but Qlib/Yahoo has unresolved rights, quality, revision, availability, and point-in-time provenance; reviewed alternatives require unapproved paid access. No retained raw snapshot, authoritative calendar, point-in-time universe, or immutable benchmark manifest exists.
+3. **Critical — no approved real dataset:** Norgate US Stocks Platinum is conditionally preferred, but its standard terms conflict with durable lineage and its public documentation does not establish every historical availability timestamp. No contract, payment, retained raw snapshot, authoritative calendar, point-in-time universe, or immutable benchmark manifest exists.
 4. **High — probabilistic interface not yet empirically calibrated:** PR #15 exposes typed raw samples, quantiles, return distributions, explicit randomness, and repair accounting while retaining legacy wrappers. No walk-forward evidence establishes calibration.
 5. **High — no real walk-forward execution:** PRs #16–#20 provide split, baseline, scoring, cost, aggregation, audit-gated execution, immutable fold results, and byte-verified local lineage. Source adapters, training-only scale/regime provenance, attested launcher capture, factor exposure, physical final isolation, and real runs remain absent.
 6. **High — no evidence-grade benchmark:** no repository artifact demonstrates incremental forecasting or economic value over a naive baseline.
@@ -113,17 +114,20 @@ Branch deletion is not required for correctness and is deferred until repository
 - PR #23 quality/security run #4: Ruff/Mypy, two dependency audits, integrity smoke, and full-history Gitleaks success.
 - PR #23 offline run #119 and package smoke run #104: success on Python 3.10 and 3.12.
 - PR #23 released-checkpoint run #8: success at the pinned revisions.
-- Web UI phase local evidence: 37 focused security regressions, maintained-surface Ruff/Mypy, and earlier core/Web UI dependency audits passed; fresh isolated-audit bootstrap was blocked by the sandbox, so full GitHub matrices remain the merge authority.
+- PR #24 quality/security run #7: Ruff/Mypy, two dependency audits, integrity smoke (including 37 Web UI cases), and full-history Gitleaks success.
+- PR #24 offline run #121 and package run #106: success on Python 3.10 and 3.12.
+- Acquisition phase local evidence: 19 isolated source-gate regressions, Ruff, maintained-surface Mypy, compilation, and patch hygiene passed; full GitHub matrices remain required.
 - PR #4 released-checkpoint regression: success at the pinned model and tokenizer revisions.
 - No failing required check was observed during reconciliation.
 - Absence of a workflow is not treated as a passing control.
 
 ## Immediate critical path
 
-1. Obtain a complete approved data evidence package: either user-supplied licensed data or separately authorized paid-source evaluation.
-2. Implement the selected source adapter and bind its calendar, point-in-time universe, raw hashes, licensing, and causal scale/regime generation to the canonical contract.
-3. Generate, bind, and register real leakage-audit and forecast evidence for every development fold.
-4. Add final-holdout isolation, run it once after development decisions freeze, and publish the zero-shot report before fine-tuning or paper-portfolio promotion.
+1. Obtain a signed Norgate amendment satisfying the acquisition checklist, or an equivalent provider contract; do not purchase standard access.
+2. Acquire a bounded trial snapshot on a controlled Windows host, hash it before parsing, and pass every source-gate field, including availability timing.
+3. Implement the selected source adapter and bind its calendar, point-in-time universe, raw hashes, licensing, and causal scale/regime generation to the canonical contract.
+4. Generate, bind, and register real leakage-audit and forecast evidence for every development fold.
+5. Add final-holdout isolation, run it once after development decisions freeze, and publish the zero-shot report before fine-tuning or paper-portfolio promotion.
 
 ## Next three planned PRs
 

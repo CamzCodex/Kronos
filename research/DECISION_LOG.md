@@ -207,3 +207,16 @@
 - reversal trigger: A separately versioned remote-deployment architecture passes authentication, authorization, TLS, isolation, workload, serving, dependency, and security regression review without weakening the local defaults.
 - related commit: Introduced by `security/webui-local-boundary`
 - related PR: This phase's pull request
+
+## DEC-017 — Select Norgate conditionally and reject its standard subscription
+
+- decision_id: `DEC-017`
+- date: 2026-07-22
+- decision: Select Norgate US Stocks Platinum as the preferred conditional technical source, target the USD 346.50 six-month package only after a provider- or counsel-approved signed amendment permits the project, automation/transfer, immutable snapshots, derived evidence, permitted aggregate publication, and indefinite post-expiry retention; otherwise buy nothing and keep the source gate closed.
+- alternatives: Purchase Norgate under its standard personal-use/deletion terms; buy a longer or more expensive package before evidence; use Nasdaq under standard deletion terms; run Qlib/Yahoo smoke metrics; lower the source gate; abandon the benchmark.
+- evidence: `docs/data/REFERENCE_SOURCE_ACQUISITION_DECISION.md`, the acquisition adversarial review, Norgate's 2026-06-19 EULA, stock-package/content/accessibility pages, and Nasdaq Data Link terms.
+- reasoning: Norgate most closely matches historical-constituent, delisting, corporate-action, identity, and history needs at a bounded initial price, but standard deletion/use terms make durable evidence impossible. Contract-first acquisition preserves the scientific and registry requirements without paying for unusable access.
+- risks: Custom terms may be unavailable or expensive; public documentation does not prove first-known timestamps; the supported Python path is Windows-oriented; histories and delistings contain qualifications; corrections can change data; legal interpretation requires provider/counsel acceptance.
+- reversal trigger: Another provider offers equal or stronger point-in-time technical coverage under accepted durable-retention/publication terms at lower total acquisition risk, or Norgate declines the mandatory amendment/evidence fields.
+- related commit: Introduced by `docs/data-acquisition-closeout`
+- related PR: This phase's pull request

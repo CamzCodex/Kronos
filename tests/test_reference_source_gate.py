@@ -87,16 +87,28 @@ def test_each_missing_evidence_class_blocks_source(overrides, check) -> None:
     assert check in {failure.check for failure in result.failures}
 
 
-def test_paid_source_requires_separate_authorization() -> None:
+def test_paid_source_requires_authorization_and_hashed_entitlement() -> None:
     blocked = assess_reference_source(
         _assessment(access_mode="paid", paid_access_authorized=False)
     )
-    authorized = assess_reference_source(
+    authorized_but_unbound = assess_reference_source(
         _assessment(access_mode="paid", paid_access_authorized=True)
+    )
+    bound = assess_reference_source(
+        _assessment(
+            access_mode="paid",
+            paid_access_authorized=True,
+            entitlement_artifact_sha256="b" * 64,
+        )
     )
 
     assert not blocked.checks["access_authorization"]
-    assert authorized.checks["access_authorization"]
+    assert authorized_but_unbound.checks["access_authorization"]
+    assert not authorized_but_unbound.checks["entitlement_evidence"]
+    assert bound.checks["entitlement_evidence"]
+    assert bound.passed
+    assert bound.assessment_id != authorized_but_unbound.assessment_id
+    assert bound.to_dict()["assessment"]["entitlement_artifact_sha256"] == "b" * 64
 
 
 def test_unavailable_source_is_refused_even_when_other_metadata_is_complete() -> None:
@@ -132,6 +144,8 @@ def test_result_write_is_immutable_and_idempotent(tmp_path) -> None:
 def test_invalid_dates_hashes_and_naive_evaluation_time_are_refused() -> None:
     with pytest.raises(SourceGateError, match="SHA-256"):
         _assessment(snapshot_sha256="bad")
+    with pytest.raises(SourceGateError, match="entitlement_artifact_sha256"):
+        _assessment(entitlement_artifact_sha256="bad")
     with pytest.raises(SourceGateError, match="must precede"):
         _assessment(coverage_start="2025-01-01", coverage_end="2024-01-01")
     with pytest.raises(SourceGateError, match="timezone-aware"):

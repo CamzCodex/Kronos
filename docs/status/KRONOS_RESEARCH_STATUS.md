@@ -1,7 +1,7 @@
 # Kronos research status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `60914d567cc5407ab7edfdb38aab9abb75adbdaa` plus the Web UI security phase
+Evidence baseline: `master` at `7f99e93962f1a4baee617874605871433578731e` plus the data-acquisition closeout phase
 
 ## Decision
 
@@ -38,6 +38,7 @@ These are software and checkpoint-reproducibility results. They are not independ
 - a complete-suite, passed-audit-only development runner with truth matching, test/final boundary refusal, optional downstream cost binding, and immutable JSON results merged in PR #19. Its tests use synthetic audits and forecasts only.
 - a content-addressed local experiment/model registry with exact-byte reconstruction, immutable records and alias history, and mechanically gated aliases merged in PR #20. Its tests use synthetic files and metadata only.
 - a fail-closed reference-source evidence gate merged in PR #21. Its tests validate refusal/identity mechanics only; no real source passes and no source artifact is invented.
+- source-gate v1.1 paid-entitlement binding: authorized paid access cannot pass without the SHA-256 identity of a retained confidential contract artifact. This strengthens evidence identity but does not approve a licence.
 - required quality/security CI merged in PR #23, plus a local-only Web UI boundary with strict market-input refusal and 37 route-level regressions. These are security and integrity mechanics; interactive UI predictions are not benchmark evidence.
 
 Engineering completion must not be reported as financial validation.
@@ -60,13 +61,13 @@ Engineering completion must not be reported as financial validation.
 
 ## Known data limitations
 
-- A canonical bar schema and manifest implementation exists, but no real benchmark dataset has yet been ingested and approved through it. The current source assessment rejects all reviewed candidates for decision-grade use pending evidence or paid-data authorization.
+- A canonical bar schema and manifest implementation exists, but no real benchmark dataset has yet been ingested and approved through it. Norgate US Stocks Platinum is the preferred conditional technical candidate; its standard EULA is rejected because use/retention terms conflict with durable evidence, and no custom agreement, payment, bytes, or gate result exists.
 - Built-in exchange calendars deliberately lack authoritative holiday histories; a selected source must supply one for evidence-grade validation.
 - No raw-data hash register, universe-history record, or real adjustment-policy artifact exists for a benchmark dataset.
 - The example Qlib universe is `csi300`, but membership history and survivorship treatment are not captured.
 - Default Qlib train/validation/test ranges materially overlap. The current split cannot be treated as independent evidence.
 - The bundled checkpoint-regression CSV is a software fixture, not a declared reference benchmark dataset.
-- Data licensing, redistributability, revision behavior, and corporate-action provenance for a first benchmark source remain undecided.
+- Provider/product priority is decided, but licensing, permitted publication, indefinite retention, revision capture, corporate-action availability, constituent availability, and acquisition-host transfer remain unresolved contract/evidence gates.
 
 ## Checkpoint provenance
 

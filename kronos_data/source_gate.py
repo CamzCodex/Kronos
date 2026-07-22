@@ -15,10 +15,11 @@ from typing import Any
 
 from .hashing import hash_configuration
 
-SOURCE_GATE_VERSION = "1.0.0"
+SOURCE_GATE_VERSION = "1.1.0"
 REQUIRED_SOURCE_CHECKS = (
     "usage_rights",
     "access_authorization",
+    "entitlement_evidence",
     "immutable_snapshot",
     "historical_depth",
     "authoritative_calendar",
@@ -74,6 +75,7 @@ class ReferenceSourceAssessment:
     revision_policy: str
     evidence_references: tuple[str, ...]
     source_limitations: tuple[str, ...] = ()
+    entitlement_artifact_sha256: str | None = None
 
     def __post_init__(self) -> None:
         for name in (
@@ -121,6 +123,13 @@ class ReferenceSourceAssessment:
             or _SHA256.fullmatch(self.snapshot_sha256) is None
         ):
             raise SourceGateError("snapshot_sha256 must be a SHA-256 digest or unknown")
+        if self.entitlement_artifact_sha256 is not None and (
+            not isinstance(self.entitlement_artifact_sha256, str)
+            or _SHA256.fullmatch(self.entitlement_artifact_sha256) is None
+        ):
+            raise SourceGateError(
+                "entitlement_artifact_sha256 must be a SHA-256 digest or unknown"
+            )
         start = _date(self.coverage_start, "coverage_start")
         end = _date(self.coverage_end, "coverage_end")
         if start >= end:
@@ -170,6 +179,7 @@ class ReferenceSourceAssessment:
             "currency_metadata": self.currency_metadata,
             "revision_policy": self.revision_policy,
             "evidence_references": list(self.evidence_references),
+            "entitlement_artifact_sha256": self.entitlement_artifact_sha256,
             "source_limitations": list(self.source_limitations),
         }
 
@@ -237,6 +247,8 @@ def assess_reference_source(
         "usage_rights": assessment.usage_rights_confirmed is True,
         "access_authorization": mode is not AccessMode.UNAVAILABLE
         and (mode is not AccessMode.PAID or assessment.paid_access_authorized),
+        "entitlement_evidence": mode is not AccessMode.PAID
+        or bool(assessment.entitlement_artifact_sha256),
         "immutable_snapshot": bool(assessment.snapshot_sha256)
         and assessment.raw_snapshot_retained,
         "historical_depth": history_years >= minimum_history_years,
@@ -262,6 +274,9 @@ def assess_reference_source(
     messages = {
         "usage_rights": "usage/licensing rights are unconfirmed or refused",
         "access_authorization": "source is unavailable or requires unapproved paid access",
+        "entitlement_evidence": (
+            "paid access is not bound to the SHA-256 of a retained entitlement artifact"
+        ),
         "immutable_snapshot": "exact raw bytes are not retained and SHA-256 pinned",
         "historical_depth": (
             f"history is {history_years:.2f} years; at least {minimum_history_years:.2f} required"
