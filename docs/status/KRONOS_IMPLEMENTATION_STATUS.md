@@ -1,21 +1,21 @@
 # Kronos implementation status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `c94cf3be1af5f57849e67defeb25c82ddd93815d`  
+Evidence baseline: `master` at `577af114c2fdae7fde5dfc4f89475ebcda06e074`
 Operating mode: research and paper simulation only; no broker execution
 
 ## Executive status
 
-Kronos has a materially stronger engineering foundation than the upstream demo, but it does not yet contain the research system required to determine whether the model adds economically useful information. Storage, sampling, packaging, selected model primitives, and pinned-checkpoint numerical regression are hardened. The canonical data contract, causal auditor, probabilistic forecast contract, walk-forward engine, baseline suite, experiment registry, and zero-shot benchmark are not implemented.
+Kronos has a materially stronger engineering foundation than the upstream demo, but it does not yet contain the research system required to determine whether the model adds economically useful information. Storage, sampling, packaging, selected model primitives, pinned-checkpoint numerical regression, and the reusable canonical data contract are hardened. A real approved dataset, causal auditor, probabilistic forecast contract, walk-forward engine, baseline suite, executable experiment registry, and zero-shot benchmark are not implemented.
 
 Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VALIDATED**.
 
 ## Reconciled repository state
 
 - Default branch: `master`.
-- Current master SHA: `c94cf3be1af5f57849e67defeb25c82ddd93815d`.
-- Open pull requests at reconciliation: none after PR #11 merged.
-- Most recent merge: PR #11, Phase 4D streaming and pre-replacement archive validation.
+- Current master SHA at this phase's start: `577af114c2fdae7fde5dfc4f89475ebcda06e074`.
+- Open pull requests at this phase's start: none after PR #12 merged.
+- Most recent merge at this phase's start: PR #12, Phase 0 status and research-governance reconciliation.
 - The mission's previously expected SHA, `af9c4bb0d1c6d4883e1d9ea28a83632c1c6eb978`, was correct before PR #11.
 - The repository has no release tag or declared production deployment.
 
@@ -31,12 +31,13 @@ Current implementation classification: **ENGINEERING HARDENED / RESEARCH NOT VAL
 | Versioned checksummed data-only `.kronos.zip` format | PR #8; `finetune/data_io.py` | Complete for portable snapshots |
 | Safe Qlib preprocessing, training, inference and signal persistence | PRs #9 and #10 | Complete for covered I/O paths |
 | Memory-bounded multi-frame archive writing and pre-replacement validation | PR #11; `finetune/archive_writer.py` | Complete for format v1 |
+| Canonical bar schema, structured validation, deterministic dataset manifests and data-card templates | `kronos_data/`; `data/canonical-market-contract` | Complete as a reusable contract; not yet bound to a real source |
 
 ## Branch reconciliation
 
 ### Current development branches
 
-No unmerged mission branch is active immediately after PR #11. The next branches are planned, not yet claimed complete.
+`data/canonical-market-contract` is the active focused branch for this phase. Its capabilities are not treated as merged until its required CI gates pass.
 
 ### Retained historical branches
 
@@ -47,6 +48,7 @@ No unmerged mission branch is active immediately after PR #11. The next branches
 - `hardening/phase-4b-wire-safe-data`
 - `hardening/phase-4c-safe-backtest`
 - `hardening/phase-4d-stream-archives`
+- `docs/phase-0-reconciliation`
 - `import/upstream-pr-247-offline-tests`
 - `import/upstream-pr-262-sampling`
 - `import/upstream-pr-263-csv-leakage`
@@ -64,7 +66,7 @@ Branch deletion is not required for correctness and is deferred until repository
 
 1. **Critical — split contamination:** `finetune/config.py` overlaps training and validation from 2022-09-01 through 2022-12-31, and validation and test from 2024-04-01 through 2024-06-30. The overlap exceeds the declared 90-row lookback accommodation. Current demo fine-tuning and backtesting cannot support an untouched out-of-sample claim.
 2. **Critical — no reusable leakage auditor:** only selected normalization behavior has a regression test. Split, label-window, feature-availability, corporate-action, universe, and final-holdout causality are unproven.
-3. **High — no canonical market-data contract or dataset identity:** data schema, exchange calendars, adjustment policy, content hashes, universe history, and configuration hashes are not bound into a dataset manifest.
+3. **High — no approved real dataset:** the canonical contract now exists on this phase branch, but no selected provider, authoritative calendar, point-in-time universe, licensed raw snapshot, or immutable benchmark manifest exists.
 4. **High — inference averages paths:** the public predictor does not expose typed raw sample paths, quantiles, calibration data, repair accounting, or explicit generator provenance.
 5. **High — no walk-forward evidence engine:** expanding/rolling folds, purging/embargo, mandatory baselines, probabilistic metrics, conservative costs, and final holdout do not exist.
 6. **High — no evidence-grade benchmark:** no repository artifact demonstrates incremental forecasting or economic value over a naive baseline.
@@ -76,13 +78,14 @@ Branch deletion is not required for correctness and is deferred until repository
 
 - PR #11 offline tests: success on Python 3.10 and 3.12.
 - PR #11 package smoke: success on Python 3.10 and 3.12, including editable, sdist, wheel, and clean import paths.
+- PR #12 offline and package smoke: success on Python 3.10 and 3.12.
 - PR #4 released-checkpoint regression: success at the pinned model and tokenizer revisions.
 - No failing required check was observed during reconciliation.
 - Absence of a workflow is not treated as a passing control.
 
 ## Immediate critical path
 
-1. Implement the canonical validated market-data contract and deterministic dataset manifests.
+1. Select the reference source and bind its authoritative calendar, point-in-time universe, raw hashes, and licensing to the canonical contract.
 2. Implement the leakage and causality auditor, including contaminated fixtures and a hard invalidation result.
 3. Replace the mean-only forecast return with a typed probabilistic result while preserving the current compatibility wrapper.
 4. Build the walk-forward and baseline engine only after the data and causality contracts are executable.
@@ -90,9 +93,9 @@ Branch deletion is not required for correctness and is deferred until repository
 
 ## Next three planned PRs
 
-1. `data/canonical-market-contract` — schema, structured validation, adjustment declarations, deterministic manifests, data-card template, tests.
-2. `data/leakage-auditor` — split/feature/label/holdout/universe/corporate-action checks, contaminated fixtures, CI gate.
-3. `inference/probabilistic-forecast-api` — requests/results, raw and validated paths, quantiles, seeded generation, validity accounting, compatibility wrapper.
+1. `data/leakage-auditor` — split/feature/label/holdout/universe/corporate-action checks, contaminated fixtures, CI gate.
+2. `inference/probabilistic-forecast-api` — requests/results, raw and validated paths, quantiles, seeded generation, validity accounting, compatibility wrapper.
+3. `evaluation/walk-forward-engine` — expanding/rolling folds, fixed holdout, purging/embargo, immutable fold records.
 
 ## Merge policy
 
