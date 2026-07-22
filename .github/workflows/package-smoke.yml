@@ -102,7 +102,8 @@ jobs:
           assert version("kronos-timeseries") == model.__version__
           assert model.get_model_class("kronos") is model.Kronos
           assert data_io.FORMAT_VERSION == 1
-          assert data_io.save_frame_mapping is archive_writer.save_frame_mapping
+          assert callable(data_io.save_frame_mapping)
+          assert data_io.save_frame_mapping is not archive_writer.save_frame_mapping
           assert archive_paths.save_frame_mapping is archive_writer.save_frame_mapping
           assert archive_paths.SAFE_ARCHIVE_SUFFIX == ".kronos.zip"
           assert callable(backtest_io.load_test_data)
