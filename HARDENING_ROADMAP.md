@@ -63,7 +63,7 @@ The safe archive foundation merged in PR #8. Qlib preprocessing and training wir
 - [x] Wire Qlib train, validation, and test datasets to canonical `.kronos.zip` archives.
 - [x] Persist generated prediction signals without pickle.
 - [x] Add cross-version resolver, migration, tampering, path-safety, package, and dataset integration tests.
-- [ ] Stream archive writes to reduce peak memory for large multi-symbol datasets.
+- [x] Stream archive writes to reduce peak memory for large multi-symbol datasets.
 - [ ] Audit every normalization and split path for target leakage.
 - [ ] Add tests proving train, validation, test, and backtest boundaries are causal.
 - [ ] Record dataset hashes, feature definitions, and preprocessing configuration.
