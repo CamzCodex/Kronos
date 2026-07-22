@@ -60,4 +60,5 @@ jobs:
             tests/test_evaluation_costs.py \
             tests/test_fold_aggregation.py \
             tests/test_evaluation_runner.py \
-            tests/test_experiment_registry.py
+            tests/test_experiment_registry.py \
+            tests/test_reference_source_gate.py

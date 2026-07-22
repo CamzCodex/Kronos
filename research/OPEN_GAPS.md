@@ -20,14 +20,14 @@ Status date: 2026-07-22
 ## GAP-002 — No approved canonical benchmark dataset
 
 - gap_id: `GAP-002`
-- title: Canonical bars, validation reports, and deterministic manifests absent
-- description: The reusable `kronos_data` contract now binds canonical fields, structured validation, content/configuration hashes, splits, adjustment declaration, code commit, and immutable manifest identity. No real provider adapter, authoritative calendar, point-in-time universe, or approved dataset manifest exists yet.
-- severity: High
-- impact: A selected source still cannot be used for evidence-grade experiments until it is ingested and bound to the contract.
-- evidence: `kronos_data/`, `data/cards/reference_daily/DATA_CARD.md`, and the Phase 2 adversarial review.
+- title: No source has passed the canonical benchmark evidence gate
+- description: The reusable `kronos_data` contract binds canonical fields, validation, hashes, splits, adjustment declaration, code commit, and immutable manifest identity. The active source gate additionally requires confirmed rights/access, retained hashed bytes, authoritative sessions, causal adjustments, point-in-time membership, delistings, stable identifiers/currency, revision policy, and primary evidence. Qlib/Yahoo remains incomplete and reviewed alternatives require unapproved paid access.
+- severity: Critical
+- impact: No selected source can be ingested for a decision-grade experiment, so the benchmark cannot start honestly.
+- evidence: `kronos_data/source_gate.py`, `docs/data/REFERENCE_SOURCE_ASSESSMENT.md`, primary sources linked there, `data/cards/reference_daily/DATA_CARD.md`, and the Phase 2/source-gate adversarial reviews.
 - owner: Unassigned
-- status: Partially resolved — real dataset remains a promotion blocker
-- required work: Select source/licence; implement adapter; supply authoritative calendar and universe history; write and register the first immutable manifest.
+- status: Partially resolved — requirements and candidate refusal are explicit; data acquisition remains a promotion blocker
+- required work: Supply an already licensed evidence package or separately authorize paid-source evaluation; then implement the source adapter, pass this gate, and write/register the first real manifest.
 - blocking decision: Any evidence-grade experiment
 - related PR: None
 - related experiment: None
@@ -66,7 +66,7 @@ Status date: 2026-07-22
 
 - gap_id: `GAP-005`
 - title: Evaluation contracts exist but source adapters and real execution are absent
-- description: PRs #16–#19 implement split/audit binding, all mandatory comparators, scoring, causal paper-cost accounting, cost sensitivity, paired fold aggregation, final-score separation, audit revalidation, exact comparator/truth matching, boundary enforcement, and immutable fold results. The active registry phase adds content-addressed byte verification and reconstruction. No real source adapter, training-only scale/regime provenance, attested launcher, or physical final-data isolation exists.
+- description: PRs #16–#20 implement split/audit binding, mandatory comparators, scoring, causal costs, paired/final-isolated aggregation, audit-gated execution, immutable fold results, and byte-verified reconstruction. The active source phase refuses incomplete providers. No real source adapter, training-only scale/regime provenance, attested launcher, or physical final-data isolation exists.
 - severity: Critical
 - impact: The central mission question cannot be answered.
 - evidence: `kronos_eval/walk_forward.py`, `baselines.py`, `metrics.py`, `costs.py`, `aggregation.py`, `runner.py`, their regression tests, protocol documents, and Phase 5A–5D adversarial reviews.

@@ -18,6 +18,17 @@ from .leakage import (
 )
 from .manifests import DatasetManifest, build_dataset_manifest, write_manifest
 from .schema import CANONICAL_BAR_FIELDS, FEATURE_SCHEMA_VERSION
+from .source_gate import (
+    REQUIRED_SOURCE_CHECKS,
+    SOURCE_GATE_VERSION,
+    AccessMode,
+    ReferenceSourceAssessment,
+    SourceGateError,
+    SourceGateFinding,
+    SourceGateResult,
+    assess_reference_source,
+    write_source_gate_result,
+)
 from .validation import (
     IssueSeverity,
     ValidationConfig,
@@ -39,13 +50,21 @@ __all__ = [
     "LeakageAuditSpec",
     "NormalizationProbe",
     "REQUIRED_LEAKAGE_CHECKS",
+    "REQUIRED_SOURCE_CHECKS",
+    "SOURCE_GATE_VERSION",
     "SplitBoundary",
     "SplitRole",
+    "AccessMode",
+    "ReferenceSourceAssessment",
+    "SourceGateError",
+    "SourceGateFinding",
+    "SourceGateResult",
     "UniversePolicy",
     "ValidationConfig",
     "ValidationIssue",
     "ValidationReport",
     "audit_leakage",
+    "assess_reference_source",
     "hash_split_boundaries",
     "build_dataset_manifest",
     "calendar_for",
@@ -54,4 +73,5 @@ __all__ = [
     "sha256_file",
     "validate_bars",
     "write_manifest",
+    "write_source_gate_result",
 ]

@@ -168,3 +168,16 @@
 - reversal trigger: A versioned registry or MLflow-compatible backend that preserves content verification, immutable history, reconstructability, and stricter attestation with migration tests.
 - related commit: Introduced by `registry/experiment-and-model-lineage`
 - related PR: This phase's pull request
+
+## DEC-014 — No reviewed reference source is approved
+
+- decision_id: `DEC-014`
+- date: 2026-07-22
+- decision: Refuse to create a decision-grade dataset manifest unless a provider passes explicit usage-rights/access, retained-snapshot hash, historical-depth, calendar, causal-adjustment, point-in-time membership, delisting, instrument/currency, revision, and primary-evidence checks. Do not approve Qlib/Yahoo or reviewed paid alternatives on current evidence.
+- alternatives: Treat Qlib/Yahoo as approved despite documented quality/version warnings and unresolved rights; purchase a provider without authorization; use the bundled single-instrument intraday fixture as a daily equity-universe benchmark; invent a snapshot hash and continue.
+- evidence: `kronos_data/source_gate.py`, source-gate regression tests, `docs/data/REFERENCE_SOURCE_ASSESSMENT.md`, and its linked primary sources.
+- reasoning: A forced benchmark on unlicensed, unavailable, mutable, future-adjusted, or survivorship-biased data would produce precise but non-decision-grade metrics. Unknown is more truthful than an unsupported approval.
+- risks: The zero-shot benchmark remains blocked until data authority is supplied; a later approved source may require adapter-specific work and cost.
+- reversal trigger: A complete user-supplied licensed evidence package or separately authorized paid-source evaluation passes the versioned source gate and downstream canonical/leakage validation.
+- related commit: Introduced by `data/reference-source-gate`
+- related PR: This phase's pull request

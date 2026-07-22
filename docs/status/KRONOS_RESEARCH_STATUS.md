@@ -1,7 +1,7 @@
 # Kronos research status
 
 Status date: 2026-07-22  
-Evidence baseline: `master` at `1b5000cf22247ae28de7e4e04cb6fdba5f854f4d`
+Evidence baseline: `master` at `d47d0048ee0521b304d96102205dd0f9d2eaacde`
 
 ## Decision
 
@@ -36,7 +36,8 @@ These are software and checkpoint-reproducibility results. They are not independ
 - eleven frozen, identity-bound forecast baselines receiving the same validated OHLCVA information set, merged in PR #17. Their deterministic or seeded output correctness has been tested, but no comparative market metric has been calculated.
 - common point, direction, ranking, probabilistic, regime, paper-cost, exposure, cost-sensitivity, paired bootstrap, and final-isolation calculations merged in PR #18. Only synthetic formula and failure-mode fixtures have been evaluated.
 - a complete-suite, passed-audit-only development runner with truth matching, test/final boundary refusal, optional downstream cost binding, and immutable JSON results merged in PR #19. Its tests use synthetic audits and forecasts only.
-- a content-addressed local experiment/model registry with exact-byte reconstruction, immutable records and alias history, and mechanically gated aliases on the active phase branch. Its tests use synthetic files and metadata only.
+- a content-addressed local experiment/model registry with exact-byte reconstruction, immutable records and alias history, and mechanically gated aliases merged in PR #20. Its tests use synthetic files and metadata only.
+- a fail-closed reference-source evidence gate on the active phase branch. Its tests validate refusal/identity mechanics only; no real source passes and no source artifact is invented.
 
 Engineering completion must not be reported as financial validation.
 
@@ -58,7 +59,7 @@ Engineering completion must not be reported as financial validation.
 
 ## Known data limitations
 
-- A canonical bar schema and manifest implementation exists, but no real benchmark dataset has yet been ingested and approved through it.
+- A canonical bar schema and manifest implementation exists, but no real benchmark dataset has yet been ingested and approved through it. The current source assessment rejects all reviewed candidates for decision-grade use pending evidence or paid-data authorization.
 - Built-in exchange calendars deliberately lack authoritative holiday histories; a selected source must supply one for evidence-grade validation.
 - No raw-data hash register, universe-history record, or real adjustment-policy artifact exists for a benchmark dataset.
 - The example Qlib universe is `csi300`, but membership history and survivorship treatment are not captured.

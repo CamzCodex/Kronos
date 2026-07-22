@@ -71,6 +71,7 @@ jobs:
           assert callable(kronos_data.validate_bars)
           assert callable(kronos_data.build_dataset_manifest)
           assert callable(kronos_data.audit_leakage)
+          assert callable(kronos_data.assess_reference_source)
           assert callable(kronos_eval.build_walk_forward_plan)
           assert callable(kronos_eval.attach_leakage_audit)
           assert callable(kronos_eval.run_baseline_suite)
@@ -135,6 +136,7 @@ jobs:
           assert callable(kronos_eval.run_evaluation_fold)
           assert callable(kronos_eval.write_evaluation_fold_result)
           assert callable(kronos_eval.ExperimentRegistry)
+          assert callable(kronos_data.assess_reference_source)
           assert data_io.FORMAT_VERSION == 1
           assert callable(data_io.save_frame_mapping)
           assert data_io.save_frame_mapping is not archive_writer.save_frame_mapping
