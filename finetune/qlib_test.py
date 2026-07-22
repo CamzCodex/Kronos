@@ -1,27 +1,35 @@
+import argparse
 import os
 import sys
-import argparse
-import pickle
 from collections import defaultdict
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, DataLoader
-from tqdm import trange, tqdm
 from matplotlib import pyplot as plt
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 
 import qlib
+from qlib.backtest import backtest, executor
 from qlib.config import REG_CN
-from qlib.backtest import backtest, executor, CommonInfrastructure
 from qlib.contrib.evaluate import risk_analysis
 from qlib.contrib.strategy import TopkDropoutStrategy
-from qlib.utils import flatten_dict
 from qlib.utils.time import Freq
 
-# Ensure project root is in the Python path
-sys.path.append("../")
-from config import Config
+# Ensure the project root is importable regardless of the current directory.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+try:
+    from .backtest_io import load_test_data, save_prediction_signals
+    from .config import Config
+except ImportError:  # Script-style execution from the finetune directory.
+    from backtest_io import load_test_data, save_prediction_signals
+    from config import Config
+
 from model.kronos import Kronos, KronosTokenizer, auto_regressive_inference
 
 
@@ -50,13 +58,13 @@ class QlibTestDataset(Dataset):
         print("Preprocessing and building indices for test dataset...")
         for symbol in self.symbols:
             df = self.data[symbol].reset_index()
-            # Generate time features on-the-fly
+            # Generate time features on-the-fly.
             df['minute'] = df['datetime'].dt.minute
             df['hour'] = df['datetime'].dt.hour
             df['weekday'] = df['datetime'].dt.weekday
             df['day'] = df['datetime'].dt.day
             df['month'] = df['datetime'].dt.month
-            self.data[symbol] = df  # Store preprocessed dataframe
+            self.data[symbol] = df  # Store preprocessed dataframe.
 
             num_samples = len(df) - self.window_size + 1
             if num_samples > 0:
@@ -81,12 +89,18 @@ class QlibTestDataset(Dataset):
         x_stamp = context_df[self.time_feature_list].values.astype(np.float32)
         y_stamp = predict_df[self.time_feature_list].values.astype(np.float32)
 
-        # Instance-level normalization, consistent with training
+        # Instance-level normalization, consistent with training.
         x_mean, x_std = np.mean(x, axis=0), np.std(x, axis=0)
         x = (x - x_mean) / (x_std + 1e-5)
         x = np.clip(x, -self.config.clip, self.config.clip)
 
-        return torch.from_numpy(x), torch.from_numpy(x_stamp), torch.from_numpy(y_stamp), symbol, timestamp
+        return (
+            torch.from_numpy(x),
+            torch.from_numpy(x_stamp),
+            torch.from_numpy(y_stamp),
+            symbol,
+            timestamp,
+        )
 
 
 # =================================================================================
@@ -94,9 +108,7 @@ class QlibTestDataset(Dataset):
 # =================================================================================
 
 class QlibBacktest:
-    """
-    A wrapper class for conducting backtesting experiments using Qlib.
-    """
+    """A wrapper class for conducting backtesting experiments using Qlib."""
 
     def __init__(self, config: Config):
         self.config = config
@@ -134,8 +146,12 @@ class QlibBacktest:
             "account": 100_000_000,
             "benchmark": self.config.backtest_benchmark,
             "exchange_kwargs": {
-                "freq": "day", "limit_threshold": 0.095, "deal_price": "open",
-                "open_cost": 0.001, "close_cost": 0.0015, "min_cost": 5,
+                "freq": "day",
+                "limit_threshold": 0.095,
+                "deal_price": "open",
+                "open_cost": 0.001,
+                "close_cost": 0.0015,
+                "min_cost": 5,
             },
             "executor": executor.SimulatorExecutor(**executor_config),
         }
@@ -146,8 +162,13 @@ class QlibBacktest:
 
         # --- Analysis and Reporting ---
         analysis = {
-            "excess_return_without_cost": risk_analysis(report["return"] - report["bench"], freq=analysis_freq),
-            "excess_return_with_cost": risk_analysis(report["return"] - report["bench"] - report["cost"], freq=analysis_freq),
+            "excess_return_without_cost": risk_analysis(
+                report["return"] - report["bench"], freq=analysis_freq
+            ),
+            "excess_return_with_cost": risk_analysis(
+                report["return"] - report["bench"] - report["cost"],
+                freq=analysis_freq,
+            ),
         }
         print("\n--- Backtest Analysis ---")
         print("Benchmark Return:", risk_analysis(report["bench"], freq=analysis_freq), sep='\n')
@@ -157,7 +178,9 @@ class QlibBacktest:
         report_df = pd.DataFrame({
             "cum_bench": report["bench"].cumsum(),
             "cum_return_w_cost": (report["return"] - report["cost"]).cumsum(),
-            "cum_ex_return_w_cost": (report["return"] - report["bench"] - report["cost"]).cumsum(),
+            "cum_ex_return_w_cost": (
+                report["return"] - report["bench"] - report["cost"]
+            ).cumsum(),
         })
         return report_df
 
@@ -183,14 +206,21 @@ class QlibBacktest:
             if 'return' not in bench_df:
                 bench_df['return'] = report_df['cum_bench']
 
-        # Plotting results
+        # Plotting results.
         fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
         return_df.plot(ax=axes[0], title='Cumulative Return with Cost', grid=True)
-        axes[0].plot(bench_df['return'], label=self.config.instrument.upper(), color='black', linestyle='--')
+        axes[0].plot(
+            bench_df['return'],
+            label=self.config.instrument.upper(),
+            color='black',
+            linestyle='--',
+        )
         axes[0].legend()
         axes[0].set_ylabel("Cumulative Return")
 
-        ex_return_df.plot(ax=axes[1], title='Cumulative Excess Return with Cost', grid=True)
+        ex_return_df.plot(
+            ax=axes[1], title='Cumulative Excess Return with Cost', grid=True
+        )
         axes[1].legend()
         axes[1].set_xlabel("Date")
         axes[1].set_ylabel("Cumulative Excess Return")
@@ -224,25 +254,25 @@ def collate_fn_for_inference(batch):
     Returns:
         A single tuple containing the batched data.
     """
-    # Unzip the list of samples into separate lists for each data type
+    # Unzip the list of samples into separate lists for each data type.
     x, x_stamp, y_stamp, symbols, timestamps = zip(*batch)
 
-    # Stack the tensors to create a batch
+    # Stack the tensors to create a batch.
     x_batch = torch.stack(x, dim=0)
     x_stamp_batch = torch.stack(x_stamp, dim=0)
     y_stamp_batch = torch.stack(y_stamp, dim=0)
 
-    # Return the strings and timestamps as lists
+    # Return the strings and timestamps as lists.
     return x_batch, x_stamp_batch, y_stamp_batch, list(symbols), list(timestamps)
 
 
 def generate_predictions(config: dict, test_data: dict) -> dict[str, pd.DataFrame]:
     """
-    Runs inference on the test dataset to generate prediction signals.
+    Runs inference on the prepared test dataset to generate prediction signals.
 
     Args:
         config (dict): A dictionary containing inference parameters.
-        test_data (dict): The raw test data loaded from a pickle file.
+        test_data (dict): Test DataFrames loaded from the safe prepared-data archive.
 
     Returns:
         A dictionary where keys are signal types (e.g., 'mean', 'last') and
@@ -251,28 +281,44 @@ def generate_predictions(config: dict, test_data: dict) -> dict[str, pd.DataFram
     tokenizer, model = load_models(config)
     device = torch.device(config['device'])
 
-    # Use the Dataset and DataLoader for efficient batching and processing
+    # Use the Dataset and DataLoader for efficient batching and processing.
     dataset = QlibTestDataset(data=test_data, config=Config())
+    sample_count = config['sample_count']
+    if sample_count < 1:
+        raise ValueError("sample_count must be at least 1")
+    inference_batch_size = config['batch_size'] // sample_count
+    if inference_batch_size < 1:
+        raise ValueError("batch_size must be at least as large as sample_count")
+
     loader = DataLoader(
         dataset,
-        batch_size=config['batch_size'] // config['sample_count'],
+        batch_size=inference_batch_size,
         shuffle=False,
-        num_workers=os.cpu_count() // 2,
-        collate_fn=collate_fn_for_inference
+        num_workers=max(0, (os.cpu_count() or 1) // 2),
+        collate_fn=collate_fn_for_inference,
     )
 
     results = defaultdict(list)
     with torch.no_grad():
         for x, x_stamp, y_stamp, symbols, timestamps in tqdm(loader, desc="Inference"):
             preds = auto_regressive_inference(
-                tokenizer, model, x.to(device), x_stamp.to(device), y_stamp.to(device),
-                max_context=config['max_context'], pred_len=config['pred_len'], clip=config['clip'],
-                T=config['T'], top_k=config['top_k'], top_p=config['top_p'], sample_count=config['sample_count']
+                tokenizer,
+                model,
+                x.to(device),
+                x_stamp.to(device),
+                y_stamp.to(device),
+                max_context=config['max_context'],
+                pred_len=config['pred_len'],
+                clip=config['clip'],
+                T=config['T'],
+                top_k=config['top_k'],
+                top_p=config['top_p'],
+                sample_count=sample_count,
             )
-            # You can try commenting on this line to keep the history data
+            # Keep only the generated prediction horizon.
             preds = preds[:, -config['pred_len']:, :]
 
-            # The 'close' price is at index 3 in `feature_list`
+            # The 'close' price is at index 3 in `feature_list`.
             last_day_close = x[:, -1, 3].numpy()
             signals = {
                 'last': preds[:, -1, 3] - last_day_close,
@@ -283,13 +329,17 @@ def generate_predictions(config: dict, test_data: dict) -> dict[str, pd.DataFram
 
             for i in range(len(symbols)):
                 for sig_type, sig_values in signals.items():
-                    results[sig_type].append((timestamps[i], symbols[i], sig_values[i]))
+                    results[sig_type].append(
+                        (timestamps[i], symbols[i], sig_values[i])
+                    )
 
     print("Post-processing predictions into DataFrames...")
     prediction_dfs = {}
     for sig_type, records in results.items():
         df = pd.DataFrame(records, columns=['datetime', 'instrument', 'score'])
-        pivot_df = df.pivot_table(index='datetime', columns='instrument', values='score')
+        pivot_df = df.pivot_table(
+            index='datetime', columns='instrument', values='score'
+        )
         prediction_dfs[sig_type] = pivot_df.sort_index()
 
     return prediction_dfs
@@ -302,13 +352,29 @@ def generate_predictions(config: dict, test_data: dict) -> dict[str, pd.DataFram
 def main():
     """Main function to set up config, run inference, and execute backtesting."""
     parser = argparse.ArgumentParser(description="Run Kronos Inference and Backtesting")
-    parser.add_argument("--device", type=str, default="cuda:1", help="Device for inference (e.g., 'cuda:0', 'cpu')")
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda:1",
+        help="Device for inference (e.g., 'cuda:0', 'cpu')",
+    )
+    parser.add_argument(
+        "--allow-unsafe-pickle",
+        action="store_true",
+        help=(
+            "temporarily allow a verified local test_data.pkl when no safe archive "
+            "exists; migrate it immediately after use"
+        ),
+    )
     args = parser.parse_args()
 
     # --- 1. Configuration Setup ---
     base_config = Config()
+    allow_unsafe_pickle = (
+        args.allow_unsafe_pickle or base_config.allow_unsafe_pickle
+    )
 
-    # Create a dedicated dictionary for this run's configuration
+    # Create a dedicated dictionary for this run's configuration.
     run_config = {
         'device': args.device,
         'data_path': base_config.dataset_path,
@@ -324,6 +390,7 @@ def main():
         'top_p': base_config.inference_top_p,
         'sample_count': base_config.inference_sample_count,
         'batch_size': base_config.backtest_batch_size,
+        'allow_unsafe_pickle': allow_unsafe_pickle,
     }
 
     print("--- Running with Configuration ---")
@@ -332,31 +399,25 @@ def main():
     print("-" * 35)
 
     # --- 2. Load Data ---
-    test_data_path = os.path.join(run_config['data_path'], "test_data.pkl")
-    print(f"Loading test data from {test_data_path}...")
-    with open(test_data_path, 'rb') as f:
-        test_data = pickle.load(f)
-    print(test_data)
+    print(f"Loading test data from {run_config['data_path']}...")
+    test_data = load_test_data(
+        run_config['data_path'],
+        allow_unsafe_pickle=allow_unsafe_pickle,
+    )
+    print(f"Loaded prepared data for {len(test_data)} symbols.")
+
     # --- 3. Generate Predictions ---
     model_preds = generate_predictions(run_config, test_data)
 
     # --- 4. Save Predictions ---
-    save_dir = os.path.join(run_config['result_save_path'], run_config['result_name'])
-    os.makedirs(save_dir, exist_ok=True)
-    predictions_file = os.path.join(save_dir, "predictions.pkl")
-    print(f"Saving prediction signals to {predictions_file}...")
-    with open(predictions_file, 'wb') as f:
-        pickle.dump(model_preds, f)
+    save_dir = Path(run_config['result_save_path']) / run_config['result_name']
+    predictions_file = save_prediction_signals(model_preds, save_dir)
+    print(f"Saved prediction signals to {predictions_file}.")
 
     # --- 5. Run Backtesting ---
-    with open(predictions_file, 'rb') as f:
-        model_preds = pickle.load(f)
-
     backtester = QlibBacktest(base_config)
     backtester.run_and_plot_results(model_preds)
 
 
 if __name__ == '__main__':
     main()
-
-

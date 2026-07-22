@@ -48,9 +48,11 @@ jobs:
           from finetune import (
               load_frame_mapping,
               load_named_frame_mapping,
+              load_test_data,
               safe_archive_path,
               save_frame_mapping,
               save_named_frame_mapping,
+              save_prediction_signals,
           )
           from model import Kronos, KronosPredictor, KronosTokenizer
 
@@ -62,9 +64,11 @@ jobs:
           assert finetune is not None
           assert callable(load_frame_mapping)
           assert callable(load_named_frame_mapping)
+          assert callable(load_test_data)
           assert callable(safe_archive_path)
           assert callable(save_frame_mapping)
           assert callable(save_named_frame_mapping)
+          assert callable(save_prediction_signals)
           PY
 
       - name: Build source and wheel distributions
@@ -85,7 +89,7 @@ jobs:
 
           import finetune
           import model
-          from finetune import archive_paths, data_io
+          from finetune import archive_paths, backtest_io, data_io
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
           model_imported_from = Path(model.__file__).resolve()
@@ -97,4 +101,6 @@ jobs:
           assert model.get_model_class("kronos") is model.Kronos
           assert data_io.FORMAT_VERSION == 1
           assert archive_paths.SAFE_ARCHIVE_SUFFIX == ".kronos.zip"
+          assert callable(backtest_io.load_test_data)
+          assert callable(backtest_io.save_prediction_signals)
           PY
