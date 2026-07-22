@@ -16,7 +16,6 @@ import os
 import pickle
 import re
 import stat
-import tempfile
 import warnings
 import zipfile
 from collections.abc import Mapping
@@ -104,62 +103,19 @@ def save_frame_mapping(
     data: Mapping[str, pd.DataFrame],
     path: str | os.PathLike[str],
 ) -> Path:
-    """Atomically write a deterministic, checksummed Kronos frame archive."""
+    """Atomically write through the memory-bounded archive implementation.
 
-    frames = _validate_frame_mapping(data)
-    destination = Path(path)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-
-    entries: list[dict[str, Any]] = []
-    payloads: list[tuple[str, bytes]] = []
-    for index, key in enumerate(sorted(frames)):
-        member_path = f"frames/{index:08d}.json"
-        payload = _frame_to_bytes(frames[key])
-        entries.append(
-            {
-                "key": key,
-                "path": member_path,
-                "sha256": hashlib.sha256(payload).hexdigest(),
-                "size": len(payload),
-            }
-        )
-        payloads.append((member_path, payload))
-
-    manifest = {
-        "format": FORMAT_NAME,
-        "version": FORMAT_VERSION,
-        "frame_count": len(entries),
-        "entries": entries,
-    }
-    manifest_payload = json.dumps(
-        manifest,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode(_JSON_ENCODING)
-
-    file_descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{destination.name}.",
-        suffix=".tmp",
-        dir=destination.parent,
-    )
-    os.close(file_descriptor)
-    temporary_path = Path(temporary_name)
+    The import is deliberately lazy.  It avoids a module-import cycle while
+    ensuring both ``python -m finetune.data_io`` and direct script execution
+    use the same one-frame-at-a-time writer as package callers.
+    """
 
     try:
-        with zipfile.ZipFile(temporary_path, mode="w") as archive:
-            _write_member(archive, MANIFEST_NAME, manifest_payload)
-            for member_path, payload in payloads:
-                _write_member(archive, member_path, payload)
+        from .archive_writer import save_frame_mapping as stream_save
+    except ImportError:  # Script-style execution from the finetune directory.
+        from archive_writer import save_frame_mapping as stream_save
 
-        with temporary_path.open("rb") as handle:
-            os.fsync(handle.fileno())
-        os.replace(temporary_path, destination)
-    except Exception:
-        temporary_path.unlink(missing_ok=True)
-        raise
-
-    return destination
+    return stream_save(data, path)
 
 
 def _validate_member_name(name: str) -> None:
