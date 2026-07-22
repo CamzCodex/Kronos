@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from finetune import data_io
+from finetune import archive_writer, data_io, save_frame_mapping
 
 
 def _sample_frames() -> dict[str, pd.DataFrame]:
@@ -38,6 +38,16 @@ def _sample_frames() -> dict[str, pd.DataFrame]:
             index=index,
         ),
     }
+
+
+def _labelled_frames() -> dict[str, pd.DataFrame]:
+    frames = {
+        "B": pd.DataFrame({"value": [2.0]}),
+        "A": pd.DataFrame({"value": [1.0]}),
+    }
+    for key, frame in frames.items():
+        frame.attrs["label"] = key
+    return frames
 
 
 def _assert_frame_maps_equal(
@@ -69,6 +79,11 @@ def _rewrite_archive(
             output.writestr(name, payload)
 
 
+def test_public_save_paths_use_the_streaming_writer():
+    assert save_frame_mapping is archive_writer.save_frame_mapping
+    assert data_io.save_frame_mapping is archive_writer.save_frame_mapping
+
+
 def test_safe_archive_round_trip(tmp_path):
     frames = _sample_frames()
     archive_path = tmp_path / "dataset.kronos.zip"
@@ -89,6 +104,56 @@ def test_safe_archive_is_deterministic(tmp_path):
     data_io.save_frame_mapping(dict(reversed(list(frames.items()))), second)
 
     assert first.read_bytes() == second.read_bytes()
+
+
+def test_frames_are_written_before_the_next_frame_is_serialized(tmp_path, monkeypatch):
+    events: list[tuple[str, str]] = []
+    original_serialize = archive_writer._frame_to_bytes
+    original_write = archive_writer._write_member
+
+    def tracked_serialize(frame: pd.DataFrame) -> bytes:
+        events.append(("serialize", frame.attrs["label"]))
+        return original_serialize(frame)
+
+    def tracked_write(archive, name: str, payload: bytes) -> None:
+        events.append(("write", name))
+        original_write(archive, name, payload)
+
+    monkeypatch.setattr(archive_writer, "_frame_to_bytes", tracked_serialize)
+    monkeypatch.setattr(archive_writer, "_write_member", tracked_write)
+
+    archive_writer.save_frame_mapping(
+        _labelled_frames(),
+        tmp_path / "streamed.kronos.zip",
+    )
+
+    assert events == [
+        ("serialize", "A"),
+        ("write", "frames/00000000.json"),
+        ("serialize", "B"),
+        ("write", "frames/00000001.json"),
+        ("write", data_io.MANIFEST_NAME),
+    ]
+
+
+def test_failed_streaming_write_preserves_existing_destination(tmp_path, monkeypatch):
+    destination = tmp_path / "dataset.kronos.zip"
+    original_bytes = b"existing archive placeholder"
+    destination.write_bytes(original_bytes)
+    original_serialize = archive_writer._frame_to_bytes
+
+    def fail_on_second_frame(frame: pd.DataFrame) -> bytes:
+        if frame.attrs["label"] == "B":
+            raise RuntimeError("synthetic serialization failure")
+        return original_serialize(frame)
+
+    monkeypatch.setattr(archive_writer, "_frame_to_bytes", fail_on_second_frame)
+
+    with pytest.raises(RuntimeError, match="synthetic serialization failure"):
+        archive_writer.save_frame_mapping(_labelled_frames(), destination)
+
+    assert destination.read_bytes() == original_bytes
+    assert not list(tmp_path.glob(f".{destination.name}.*.tmp"))
 
 
 def test_legacy_pickle_is_blocked_before_deserialisation(tmp_path, monkeypatch):
